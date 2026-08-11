@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  analyze-and-test:
+  generate:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -24,6 +24,39 @@ jobs:
 
       - name: Generate freezed/json_serializable code
         run: dart run build_runner build --delete-conflicting-outputs
+
+      - name: Archive generated files
+        # Only the generated files travel to the other jobs — each of them
+        # still runs its own `flutter pub get` for its own package cache.
+        run: tar -czf generated.tar.gz $(find . -name "*.freezed.dart" -o -name "*.g.dart" | grep -v '^\./build/')
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: generated-code
+          path: generated.tar.gz
+          retention-days: 1
+
+  analyze-and-test:
+    needs: generate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.44.0
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: generated-code
+
+      - name: Extract generated files
+        run: tar -xzf generated.tar.gz
 
       - name: Test
         # Excludes tests tagged "chrome-only": they build the app's widget
@@ -33,6 +66,7 @@ jobs:
         run: flutter test --exclude-tags=chrome-only
 
   widget-tests-chrome:
+    needs: generate
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -46,8 +80,12 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Generate freezed/json_serializable code
-        run: dart run build_runner build --delete-conflicting-outputs
+      - uses: actions/download-artifact@v4
+        with:
+          name: generated-code
+
+      - name: Extract generated files
+        run: tar -xzf generated.tar.gz
 
       - name: Test (chrome platform)
         # Covers tests tagged "chrome-only": widget tests that build the real
@@ -57,7 +95,7 @@ jobs:
         run: flutter test --platform chrome --tags=chrome-only
 
   deploy:
-    needs: [analyze-and-test, widget-tests-chrome]
+    needs: [generate, analyze-and-test, widget-tests-chrome]
     if: |
       github.ref == 'refs/heads/main' &&
       (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
@@ -77,8 +115,12 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Generate freezed/json_serializable code
-        run: dart run build_runner build --delete-conflicting-outputs
+      - uses: actions/download-artifact@v4
+        with:
+          name: generated-code
+
+      - name: Extract generated files
+        run: tar -xzf generated.tar.gz
 
       - name: Build web release
         run: tool/build_web.sh
