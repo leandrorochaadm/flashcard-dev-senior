@@ -1,5 +1,8 @@
 import 'package:get_it/get_it.dart';
-import 'package:sembast/sembast.dart';
+// Only the `DatabaseFactory` type, which is the swap point of the whole data
+// layer. No store, query or transaction of the package appears outside
+// `sembast_adapter.dart`.
+import 'package:sembast/sembast.dart' show DatabaseFactory;
 
 import '../../data/database/app_database.dart';
 import '../../data/database/sembast_adapter.dart';

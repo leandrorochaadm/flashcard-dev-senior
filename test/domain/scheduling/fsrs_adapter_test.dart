@@ -109,6 +109,20 @@ void main() {
       );
     });
 
+    test('adopting new weights applies to the very next answer', () {
+      final tunable = FsrsAdapter();
+      final before = tunable.review(MemoryState.fresh(), Rating.good, now);
+
+      final tuned = List<double>.from(tunable.parameters);
+      // parameters[2] is the initial stability of a card rated "good".
+      tuned[2] = tuned[2] * 2;
+      tunable.useParameters(tuned);
+      final after = tunable.review(MemoryState.fresh(), Rating.good, now);
+
+      expect(tunable.parameters, tuned);
+      expect(after.stability, isNot(before.stability));
+    });
+
     test('another set of weights gives another gateway, same algorithm', () {
       final tuned = adapter.withParameters(adapter.parameters);
 
@@ -139,7 +153,9 @@ void main() {
 
   group('memory state', () {
     test('a fresh state is a card nobody has answered', () {
-      const fresh = MemoryState.fresh();
+      // Built at runtime, not as a const: the short cycle rebuilds it on every
+      // miss, and that path has to be exercised.
+      final fresh = MemoryState.fresh();
 
       expect(fresh.state, CardState.newCard);
       expect(fresh.step, 0);
@@ -150,7 +166,7 @@ void main() {
     });
 
     test('copyWith touches only what it was given', () {
-      const fresh = MemoryState.fresh();
+      final fresh = MemoryState.fresh();
 
       final moved = fresh.copyWith(
         dueAt: now,

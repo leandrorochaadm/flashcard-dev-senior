@@ -20,6 +20,10 @@ abstract interface class FsrsGateway {
   /// Objective range check for the optimizer, using the package's own bounds.
   bool parametersAreInRange(List<double> candidate);
 
+  /// Adopts new weights in place, so a tuning applies to the very next
+  /// answer instead of waiting for the app to be opened again.
+  void useParameters(List<double> parameters);
+
   /// Same algorithm with different weights — used to recompute the
   /// calibration curve retroactively, before and after a tuning.
   FsrsGateway withParameters(List<double> parameters);

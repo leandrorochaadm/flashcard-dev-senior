@@ -325,4 +325,7 @@ final class _StubGateway implements FsrsGateway {
 
   @override
   FsrsGateway withParameters(List<double> parameters) => this;
+
+  @override
+  void useParameters(List<double> parameters) {}
 }

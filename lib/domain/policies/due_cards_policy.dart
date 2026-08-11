@@ -71,10 +71,7 @@ final class DueCardsPolicy {
     return counts;
   }
 
-  static int _byDueDate(Card a, Card b) {
-    final dueA = a.dueAt;
-    final dueB = b.dueAt;
-    if (dueA == null || dueB == null) return a.id.compareTo(b.id);
-    return dueA.compareTo(dueB);
-  }
+  /// Both lists that use this filter on `dueAt != null` first, so the dates
+  /// are known to exist here.
+  static int _byDueDate(Card a, Card b) => a.dueAt!.compareTo(b.dueAt!);
 }

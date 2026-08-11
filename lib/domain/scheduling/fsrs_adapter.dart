@@ -33,8 +33,11 @@ const desiredRetention = 0.90;
 final class FsrsAdapter implements FsrsGateway {
   FsrsAdapter([List<double>? parameters])
       : parameters = List.unmodifiable(parameters ?? fsrs.defaultParameters),
-        _scheduler = fsrs.Scheduler(
-          parameters: parameters ?? fsrs.defaultParameters,
+        _scheduler = _schedulerWith(parameters ?? fsrs.defaultParameters);
+
+  static fsrs.Scheduler _schedulerWith(List<double> parameters) =>
+      fsrs.Scheduler(
+          parameters: parameters,
           desiredRetention: desiredRetention,
           learningSteps: learningSteps,
           // The requirements say a card just missed goes through the four
@@ -47,12 +50,18 @@ final class FsrsAdapter implements FsrsGateway {
           // Off on purpose: the package fuzzes before the ceiling, which would
           // punch through it. Fuzzing is step 3 of our pipeline.
           enableFuzzing: false,
-        );
+      );
 
-  final fsrs.Scheduler _scheduler;
+  fsrs.Scheduler _scheduler;
 
   @override
-  final List<double> parameters;
+  List<double> parameters;
+
+  @override
+  void useParameters(List<double> parameters) {
+    this.parameters = List.unmodifiable(parameters);
+    _scheduler = _schedulerWith(parameters);
+  }
 
   /// The package does not use `cardId` in any calculation, so a constant is
   /// enough — our ids are strings like `est-001`.
