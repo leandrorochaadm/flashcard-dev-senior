@@ -80,11 +80,13 @@ class SessionViewModel {
         _beginRound(resetAnswered: true);
         return;
       }
-      if (_duePolicy.isDayCleared(_clock.now())) {
+      final now = _clock.now();
+      if (_duePolicy.isDayCleared(now)) {
         state.value = const SessionState.dayCleared();
         return;
       }
-      state.value = SessionState.chooseSubjects(_cards.subjects);
+      state.value =
+          SessionState.chooseSubjects(_duePolicy.studiableSubjects(now));
     } on Object catch (error) {
       state.value = SessionState.error('$error');
     }
@@ -101,11 +103,13 @@ class SessionViewModel {
     final card = _currentCard;
     final current = _session;
     if (card == null || current == null) return;
+    final now = _clock.now();
     state.value = SessionState.showingAnswer(
       card,
-      _scheduler.previewIntervals(card, _clock.now()),
+      _scheduler.previewIntervals(card, now),
       current.currentRound,
       current.currentSubject,
+      _remainingInRound(now, current.currentSubject),
     );
   }
 
@@ -197,8 +201,9 @@ class SessionViewModel {
 
   void _showNextCard() {
     final current = _session!;
+    final now = _clock.now();
     final next = _duePolicy.nextDueCard(
-      _clock.now(),
+      now,
       current.currentSubject,
       skip: _answeredThisRound,
     );
@@ -212,8 +217,14 @@ class SessionViewModel {
       next,
       current.currentRound,
       current.currentSubject,
+      _remainingInRound(now, current.currentSubject),
     );
   }
+
+  /// The counter next to the clock. Counting is the policy's job — the
+  /// ViewModel only hands it the set of cards already answered.
+  int _remainingInRound(DateTime now, String subject) =>
+      _duePolicy.studiableCount(now, subject, skip: _answeredThisRound);
 
   void _toRoundBreak() {
     final current = _session!;

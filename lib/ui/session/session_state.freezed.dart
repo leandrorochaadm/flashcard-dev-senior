@@ -138,13 +138,13 @@ return error(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  loading,TResult Function( List<String> availableSubjects)?  chooseSubjects,TResult Function( Card card,  int roundIndex,  String subject)?  showingQuestion,TResult Function( Card card,  Map<Rating, Duration> previews,  int roundIndex,  String subject)?  showingAnswer,TResult Function( String finished,  String? next,  int remainingDueCards)?  roundBreak,TResult Function( StudySession session)?  scoreboard,TResult Function()?  dayCleared,TResult Function( String message)?  error,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  loading,TResult Function( List<SubjectQueue> availableSubjects)?  chooseSubjects,TResult Function( Card card,  int roundIndex,  String subject,  int remaining)?  showingQuestion,TResult Function( Card card,  Map<Rating, Duration> previews,  int roundIndex,  String subject,  int remaining)?  showingAnswer,TResult Function( String finished,  String? next,  int remainingDueCards)?  roundBreak,TResult Function( StudySession session)?  scoreboard,TResult Function()?  dayCleared,TResult Function( String message)?  error,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case SessionLoading() when loading != null:
 return loading();case SessionChooseSubjects() when chooseSubjects != null:
 return chooseSubjects(_that.availableSubjects);case SessionShowingQuestion() when showingQuestion != null:
-return showingQuestion(_that.card,_that.roundIndex,_that.subject);case SessionShowingAnswer() when showingAnswer != null:
-return showingAnswer(_that.card,_that.previews,_that.roundIndex,_that.subject);case SessionRoundBreak() when roundBreak != null:
+return showingQuestion(_that.card,_that.roundIndex,_that.subject,_that.remaining);case SessionShowingAnswer() when showingAnswer != null:
+return showingAnswer(_that.card,_that.previews,_that.roundIndex,_that.subject,_that.remaining);case SessionRoundBreak() when roundBreak != null:
 return roundBreak(_that.finished,_that.next,_that.remainingDueCards);case SessionScoreboard() when scoreboard != null:
 return scoreboard(_that.session);case SessionDayCleared() when dayCleared != null:
 return dayCleared();case SessionError() when error != null:
@@ -166,13 +166,13 @@ return error(_that.message);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  loading,required TResult Function( List<String> availableSubjects)  chooseSubjects,required TResult Function( Card card,  int roundIndex,  String subject)  showingQuestion,required TResult Function( Card card,  Map<Rating, Duration> previews,  int roundIndex,  String subject)  showingAnswer,required TResult Function( String finished,  String? next,  int remainingDueCards)  roundBreak,required TResult Function( StudySession session)  scoreboard,required TResult Function()  dayCleared,required TResult Function( String message)  error,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  loading,required TResult Function( List<SubjectQueue> availableSubjects)  chooseSubjects,required TResult Function( Card card,  int roundIndex,  String subject,  int remaining)  showingQuestion,required TResult Function( Card card,  Map<Rating, Duration> previews,  int roundIndex,  String subject,  int remaining)  showingAnswer,required TResult Function( String finished,  String? next,  int remainingDueCards)  roundBreak,required TResult Function( StudySession session)  scoreboard,required TResult Function()  dayCleared,required TResult Function( String message)  error,}) {final _that = this;
 switch (_that) {
 case SessionLoading():
 return loading();case SessionChooseSubjects():
 return chooseSubjects(_that.availableSubjects);case SessionShowingQuestion():
-return showingQuestion(_that.card,_that.roundIndex,_that.subject);case SessionShowingAnswer():
-return showingAnswer(_that.card,_that.previews,_that.roundIndex,_that.subject);case SessionRoundBreak():
+return showingQuestion(_that.card,_that.roundIndex,_that.subject,_that.remaining);case SessionShowingAnswer():
+return showingAnswer(_that.card,_that.previews,_that.roundIndex,_that.subject,_that.remaining);case SessionRoundBreak():
 return roundBreak(_that.finished,_that.next,_that.remainingDueCards);case SessionScoreboard():
 return scoreboard(_that.session);case SessionDayCleared():
 return dayCleared();case SessionError():
@@ -190,13 +190,13 @@ return error(_that.message);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  loading,TResult? Function( List<String> availableSubjects)?  chooseSubjects,TResult? Function( Card card,  int roundIndex,  String subject)?  showingQuestion,TResult? Function( Card card,  Map<Rating, Duration> previews,  int roundIndex,  String subject)?  showingAnswer,TResult? Function( String finished,  String? next,  int remainingDueCards)?  roundBreak,TResult? Function( StudySession session)?  scoreboard,TResult? Function()?  dayCleared,TResult? Function( String message)?  error,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  loading,TResult? Function( List<SubjectQueue> availableSubjects)?  chooseSubjects,TResult? Function( Card card,  int roundIndex,  String subject,  int remaining)?  showingQuestion,TResult? Function( Card card,  Map<Rating, Duration> previews,  int roundIndex,  String subject,  int remaining)?  showingAnswer,TResult? Function( String finished,  String? next,  int remainingDueCards)?  roundBreak,TResult? Function( StudySession session)?  scoreboard,TResult? Function()?  dayCleared,TResult? Function( String message)?  error,}) {final _that = this;
 switch (_that) {
 case SessionLoading() when loading != null:
 return loading();case SessionChooseSubjects() when chooseSubjects != null:
 return chooseSubjects(_that.availableSubjects);case SessionShowingQuestion() when showingQuestion != null:
-return showingQuestion(_that.card,_that.roundIndex,_that.subject);case SessionShowingAnswer() when showingAnswer != null:
-return showingAnswer(_that.card,_that.previews,_that.roundIndex,_that.subject);case SessionRoundBreak() when roundBreak != null:
+return showingQuestion(_that.card,_that.roundIndex,_that.subject,_that.remaining);case SessionShowingAnswer() when showingAnswer != null:
+return showingAnswer(_that.card,_that.previews,_that.roundIndex,_that.subject,_that.remaining);case SessionRoundBreak() when roundBreak != null:
 return roundBreak(_that.finished,_that.next,_that.remainingDueCards);case SessionScoreboard() when scoreboard != null:
 return scoreboard(_that.session);case SessionDayCleared() when dayCleared != null:
 return dayCleared();case SessionError() when error != null:
@@ -244,11 +244,11 @@ String toString() {
 
 
 class SessionChooseSubjects implements SessionState {
-  const SessionChooseSubjects( List<String> availableSubjects): _availableSubjects = availableSubjects;
+  const SessionChooseSubjects( List<SubjectQueue> availableSubjects): _availableSubjects = availableSubjects;
   
 
- final  List<String> _availableSubjects;
- List<String> get availableSubjects {
+ final  List<SubjectQueue> _availableSubjects;
+ List<SubjectQueue> get availableSubjects {
   if (_availableSubjects is EqualUnmodifiableListView) return _availableSubjects;
   // ignore: implicit_dynamic_type
   return EqualUnmodifiableListView(_availableSubjects);
@@ -285,7 +285,7 @@ abstract mixin class $SessionChooseSubjectsCopyWith<$Res> implements $SessionSta
   factory $SessionChooseSubjectsCopyWith(SessionChooseSubjects value, $Res Function(SessionChooseSubjects) _then) = _$SessionChooseSubjectsCopyWithImpl;
 @useResult
 $Res call({
- List<String> availableSubjects
+ List<SubjectQueue> availableSubjects
 });
 
 
@@ -305,7 +305,7 @@ class _$SessionChooseSubjectsCopyWithImpl<$Res>
 @pragma('vm:prefer-inline') $Res call({Object? availableSubjects = null,}) {
   return _then(SessionChooseSubjects(
 null == availableSubjects ? _self._availableSubjects : availableSubjects // ignore: cast_nullable_to_non_nullable
-as List<String>,
+as List<SubjectQueue>,
   ));
 }
 
@@ -316,12 +316,13 @@ as List<String>,
 
 
 class SessionShowingQuestion implements SessionState {
-  const SessionShowingQuestion(this.card, this.roundIndex, this.subject);
+  const SessionShowingQuestion(this.card, this.roundIndex, this.subject, this.remaining);
   
 
  final  Card card;
  final  int roundIndex;
  final  String subject;
+ final  int remaining;
 
 /// Create a copy of SessionState
 /// with the given fields replaced by the non-null parameter values.
@@ -333,16 +334,16 @@ $SessionShowingQuestionCopyWith<SessionShowingQuestion> get copyWith => _$Sessio
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is SessionShowingQuestion&&(identical(other.card, card) || other.card == card)&&(identical(other.roundIndex, roundIndex) || other.roundIndex == roundIndex)&&(identical(other.subject, subject) || other.subject == subject));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is SessionShowingQuestion&&(identical(other.card, card) || other.card == card)&&(identical(other.roundIndex, roundIndex) || other.roundIndex == roundIndex)&&(identical(other.subject, subject) || other.subject == subject)&&(identical(other.remaining, remaining) || other.remaining == remaining));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,card,roundIndex,subject);
+int get hashCode => Object.hash(runtimeType,card,roundIndex,subject,remaining);
 
 @override
 String toString() {
-  return 'SessionState.showingQuestion(card: $card, roundIndex: $roundIndex, subject: $subject)';
+  return 'SessionState.showingQuestion(card: $card, roundIndex: $roundIndex, subject: $subject, remaining: $remaining)';
 }
 
 
@@ -353,7 +354,7 @@ abstract mixin class $SessionShowingQuestionCopyWith<$Res> implements $SessionSt
   factory $SessionShowingQuestionCopyWith(SessionShowingQuestion value, $Res Function(SessionShowingQuestion) _then) = _$SessionShowingQuestionCopyWithImpl;
 @useResult
 $Res call({
- Card card, int roundIndex, String subject
+ Card card, int roundIndex, String subject, int remaining
 });
 
 
@@ -370,12 +371,13 @@ class _$SessionShowingQuestionCopyWithImpl<$Res>
 
 /// Create a copy of SessionState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') $Res call({Object? card = null,Object? roundIndex = null,Object? subject = null,}) {
+@pragma('vm:prefer-inline') $Res call({Object? card = null,Object? roundIndex = null,Object? subject = null,Object? remaining = null,}) {
   return _then(SessionShowingQuestion(
 null == card ? _self.card : card // ignore: cast_nullable_to_non_nullable
 as Card,null == roundIndex ? _self.roundIndex : roundIndex // ignore: cast_nullable_to_non_nullable
 as int,null == subject ? _self.subject : subject // ignore: cast_nullable_to_non_nullable
-as String,
+as String,null == remaining ? _self.remaining : remaining // ignore: cast_nullable_to_non_nullable
+as int,
   ));
 }
 
@@ -395,7 +397,7 @@ $CardCopyWith<$Res> get card {
 
 
 class SessionShowingAnswer implements SessionState {
-  const SessionShowingAnswer(this.card,  Map<Rating, Duration> previews, this.roundIndex, this.subject): _previews = previews;
+  const SessionShowingAnswer(this.card,  Map<Rating, Duration> previews, this.roundIndex, this.subject, this.remaining): _previews = previews;
   
 
  final  Card card;
@@ -408,6 +410,7 @@ class SessionShowingAnswer implements SessionState {
 
  final  int roundIndex;
  final  String subject;
+ final  int remaining;
 
 /// Create a copy of SessionState
 /// with the given fields replaced by the non-null parameter values.
@@ -419,16 +422,16 @@ $SessionShowingAnswerCopyWith<SessionShowingAnswer> get copyWith => _$SessionSho
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is SessionShowingAnswer&&(identical(other.card, card) || other.card == card)&&const DeepCollectionEquality().equals(other._previews, _previews)&&(identical(other.roundIndex, roundIndex) || other.roundIndex == roundIndex)&&(identical(other.subject, subject) || other.subject == subject));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is SessionShowingAnswer&&(identical(other.card, card) || other.card == card)&&const DeepCollectionEquality().equals(other._previews, _previews)&&(identical(other.roundIndex, roundIndex) || other.roundIndex == roundIndex)&&(identical(other.subject, subject) || other.subject == subject)&&(identical(other.remaining, remaining) || other.remaining == remaining));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,card,const DeepCollectionEquality().hash(_previews),roundIndex,subject);
+int get hashCode => Object.hash(runtimeType,card,const DeepCollectionEquality().hash(_previews),roundIndex,subject,remaining);
 
 @override
 String toString() {
-  return 'SessionState.showingAnswer(card: $card, previews: $previews, roundIndex: $roundIndex, subject: $subject)';
+  return 'SessionState.showingAnswer(card: $card, previews: $previews, roundIndex: $roundIndex, subject: $subject, remaining: $remaining)';
 }
 
 
@@ -439,7 +442,7 @@ abstract mixin class $SessionShowingAnswerCopyWith<$Res> implements $SessionStat
   factory $SessionShowingAnswerCopyWith(SessionShowingAnswer value, $Res Function(SessionShowingAnswer) _then) = _$SessionShowingAnswerCopyWithImpl;
 @useResult
 $Res call({
- Card card, Map<Rating, Duration> previews, int roundIndex, String subject
+ Card card, Map<Rating, Duration> previews, int roundIndex, String subject, int remaining
 });
 
 
@@ -456,13 +459,14 @@ class _$SessionShowingAnswerCopyWithImpl<$Res>
 
 /// Create a copy of SessionState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') $Res call({Object? card = null,Object? previews = null,Object? roundIndex = null,Object? subject = null,}) {
+@pragma('vm:prefer-inline') $Res call({Object? card = null,Object? previews = null,Object? roundIndex = null,Object? subject = null,Object? remaining = null,}) {
   return _then(SessionShowingAnswer(
 null == card ? _self.card : card // ignore: cast_nullable_to_non_nullable
 as Card,null == previews ? _self._previews : previews // ignore: cast_nullable_to_non_nullable
 as Map<Rating, Duration>,null == roundIndex ? _self.roundIndex : roundIndex // ignore: cast_nullable_to_non_nullable
 as int,null == subject ? _self.subject : subject // ignore: cast_nullable_to_non_nullable
-as String,
+as String,null == remaining ? _self.remaining : remaining // ignore: cast_nullable_to_non_nullable
+as int,
   ));
 }
 

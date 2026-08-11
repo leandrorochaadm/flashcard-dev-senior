@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../../core/di/service_locator.dart';
 import '../../core/router.dart';
 import '../../domain/models/study_session.dart';
+import '../../domain/policies/due_cards_policy.dart';
 import '../../domain/policies/session_policy.dart';
 import '../shared/app_scaffold.dart';
 import 'session_state.dart';
@@ -63,21 +64,40 @@ class _SessionViewState extends State<SessionView> {
               subjects: availableSubjects,
               onStart: _viewModel.start,
             ),
-          SessionShowingQuestion(:final card, :final roundIndex) => _StudyBody(
+          SessionShowingQuestion(
+            :final card,
+            :final roundIndex,
+            :final remaining
+          ) =>
+            _StudyBody(
               viewModel: _viewModel,
               roundIndex: roundIndex,
+              remaining: remaining,
               face: CardFace(card: card, revealed: false),
-              footer: Center(
+              footer: SizedBox(
+                height: 68,
+                width: double.infinity,
                 child: FilledButton(
                   onPressed: _viewModel.reveal,
+                  style: FilledButton.styleFrom(
+                    shape: const RoundedRectangleBorder(
+                      borderRadius: BorderRadius.all(Radius.circular(10)),
+                    ),
+                  ),
                   child: const Text('Mostrar resposta'),
                 ),
               ),
             ),
-          SessionShowingAnswer(:final card, :final previews, :final roundIndex) =>
+          SessionShowingAnswer(
+            :final card,
+            :final previews,
+            :final roundIndex,
+            :final remaining
+          ) =>
             _StudyBody(
               viewModel: _viewModel,
               roundIndex: roundIndex,
+              remaining: remaining,
               face: CardFace(card: card, revealed: true),
               footer: RatingButtons(
                 previews: previews,
@@ -110,12 +130,14 @@ class _StudyBody extends StatelessWidget {
   const _StudyBody({
     required this.viewModel,
     required this.roundIndex,
+    required this.remaining,
     required this.face,
     required this.footer,
   });
 
   final SessionViewModel viewModel;
   final int roundIndex;
+  final int remaining;
   final Widget face;
   final Widget footer;
 
@@ -125,7 +147,7 @@ class _StudyBody extends StatelessWidget {
       children: [
         ValueListenableBuilder<Duration>(
           valueListenable: viewModel.roundRemaining,
-          builder: (context, remaining, _) =>
+          builder: (context, roundLeft, _) =>
               ValueListenableBuilder<bool>(
             valueListenable: viewModel.paused,
             builder: (context, paused, _) => ValueListenableBuilder<bool>(
@@ -134,9 +156,10 @@ class _StudyBody extends StatelessWidget {
                   ValueListenableBuilder<Duration>(
                 valueListenable: viewModel.elapsedOnCard,
                 builder: (context, elapsed, _) => RoundTimer(
-                  roundRemaining: remaining,
+                  roundRemaining: roundLeft,
                   roundIndex: roundIndex,
                   roundCount: SessionPolicy.roundsPerSession,
+                  remaining: remaining,
                   paused: paused,
                   stopwatchVisible: stopwatchVisible,
                   elapsedOnCard: elapsed,
@@ -147,9 +170,9 @@ class _StudyBody extends StatelessWidget {
             ),
           ),
         ),
-        const Divider(),
-        Expanded(child: face),
-        const SizedBox(height: 16),
+        const Divider(height: 1),
+        Expanded(child: Center(child: face)),
+        const SizedBox(height: 12),
         footer,
       ],
     );
@@ -159,7 +182,7 @@ class _StudyBody extends StatelessWidget {
 class _SubjectPicker extends StatefulWidget {
   const _SubjectPicker({required this.subjects, required this.onStart});
 
-  final List<String> subjects;
+  final List<SubjectQueue> subjects;
   final ValueChanged<List<String>> onStart;
 
   @override
@@ -176,7 +199,7 @@ class _SubjectPickerState extends State<_SubjectPicker> {
   Widget build(BuildContext context) {
     if (widget.subjects.isEmpty) {
       return const Center(
-        child: Text('Nenhum assunto importado ainda.'),
+        child: Text('Nenhum assunto com cartão para estudar hoje.'),
       );
     }
     return Column(
@@ -190,15 +213,21 @@ class _SubjectPickerState extends State<_SubjectPicker> {
         Expanded(
           child: ListView(
             children: [
-              for (final subject in widget.subjects)
+              for (final queue in widget.subjects)
                 CheckboxListTile(
-                  title: Text(subject),
-                  value: _selected.contains(subject),
+                  title: Text(queue.subject),
+                  subtitle: Text(
+                    '${queue.cards} '
+                    '${queue.cards == 1 ? 'cartão' : 'cartões'} para hoje',
+                  ),
+                  value: _selected.contains(queue.subject),
                   onChanged: (checked) => setState(() {
                     if (checked ?? false) {
-                      if (_selected.length < _wanted) _selected.add(subject);
+                      if (_selected.length < _wanted) {
+                        _selected.add(queue.subject);
+                      }
                     } else {
-                      _selected.remove(subject);
+                      _selected.remove(queue.subject);
                     }
                   }),
                 ),
