@@ -4,6 +4,17 @@ import '../models/card.dart';
 import '../models/schedule_window.dart';
 import '../ports.dart';
 
+/// A subject that has something to study today, and how much.
+///
+/// The count is everything [DueCardsPolicy.nextDueCard] would be willing to
+/// serve in the subject: what is already due plus what anticipation may reach.
+final class SubjectQueue {
+  const SubjectQueue({required this.subject, required this.cards});
+
+  final String subject;
+  final int cards;
+}
+
 /// Which card comes next, and what "anticipating" is allowed to reach.
 ///
 /// The app may pull forward only cards that would fall due later the same day.
@@ -48,6 +59,41 @@ final class DueCardsPolicy {
     if (due != null) return due;
     return anticipateToday(now, subject: subject)
         .firstWhereOrNull((card) => !skip.contains(card.id));
+  }
+
+  /// How many cards the subject can still serve, minus the ones already
+  /// answered in this round — the counter the study screen shows next to the
+  /// clock.
+  int studiableCount(
+    DateTime now,
+    String subject, {
+    Set<String> skip = const {},
+  }) {
+    final ids = {
+      for (final card in dueNow(now, subject: subject)) card.id,
+      for (final card in anticipateToday(now, subject: subject)) card.id,
+    }..removeAll(skip);
+    return ids.length;
+  }
+
+  /// Subjects worth offering on the picker: the ones that would actually serve
+  /// a card today, biggest queue first.
+  ///
+  /// A subject whose cards are all still held by the [ContentIntakePolicy], or
+  /// all scheduled for a later day, has nothing to show — offering it would
+  /// start a round that ends on the first card, before any question appears.
+  List<SubjectQueue> studiableSubjects(DateTime now) {
+    final counts = <String, Set<String>>{};
+    for (final card in [...dueNow(now), ...anticipateToday(now)]) {
+      counts.putIfAbsent(card.subject, () => {}).add(card.id);
+    }
+    return [
+      for (final entry in counts.entries)
+        SubjectQueue(subject: entry.key, cards: entry.value.length),
+    ]..sort((a, b) {
+        final byCards = b.cards.compareTo(a.cards);
+        return byCards != 0 ? byCards : a.subject.compareTo(b.subject);
+      });
   }
 
   /// Nothing due and nothing to anticipate → the idle-time screen (H12).

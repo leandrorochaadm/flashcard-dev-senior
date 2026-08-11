@@ -153,4 +153,75 @@ void main() {
     expect(window.isPastDeadline(DateTime(2026, 9, 9, 7)), isTrue);
     expect(window.isPastDeadline(DateTime(2026, 9, 20)), isTrue);
   });
+
+
+  // A subject whose cards are all still held, or all scheduled for a later
+  // day, must not reach the picker: choosing it would open a round that ends
+  // before the first question appears.
+  test('the picker only offers subjects that can serve a card today', () {
+    final collection = FakeCollection([
+      newCard('mvvm-held',
+          subject: 'MVVM', importedAt: importedAt, dueAt: now),
+      newCard('vn-tomorrow',
+          subject: 'ValueNotifier',
+          importedAt: importedAt,
+          introducedAt: importedAt,
+          dueAt: now.add(const Duration(days: 1))),
+      newCard('estado-due',
+          subject: 'Estado',
+          importedAt: importedAt,
+          introducedAt: importedAt,
+          dueAt: now),
+    ]);
+
+    expect(
+      policyWith(collection).studiableSubjects(now).map((q) => q.subject),
+      ['Estado'],
+    );
+  });
+
+  test('subjects come with the size of their queue, biggest first', () {
+    final collection = FakeCollection([
+      newCard('a',
+          subject: 'Estado',
+          importedAt: importedAt,
+          introducedAt: importedAt,
+          dueAt: now),
+      newCard('b',
+          subject: 'Estado',
+          importedAt: importedAt,
+          introducedAt: importedAt,
+          // Later today: anticipation reaches it, so it counts.
+          dueAt: now.add(const Duration(hours: 2))),
+      newCard('c',
+          subject: 'MVVM',
+          importedAt: importedAt,
+          introducedAt: importedAt,
+          dueAt: now),
+    ]);
+
+    final queues = policyWith(collection).studiableSubjects(now);
+
+    expect(queues.map((q) => q.subject), ['Estado', 'MVVM']);
+    expect(queues.map((q) => q.cards), [2, 1]);
+  });
+
+  test('the round counter drops the cards already answered', () {
+    final collection = FakeCollection([
+      newCard('a',
+          subject: 'Estado',
+          importedAt: importedAt,
+          introducedAt: importedAt,
+          dueAt: now),
+      newCard('b',
+          subject: 'Estado',
+          importedAt: importedAt,
+          introducedAt: importedAt,
+          dueAt: now),
+    ]);
+    final policy = policyWith(collection);
+
+    expect(policy.studiableCount(now, 'Estado'), 2);
+    expect(policy.studiableCount(now, 'Estado', skip: {'a'}), 1);
+  });
 }
