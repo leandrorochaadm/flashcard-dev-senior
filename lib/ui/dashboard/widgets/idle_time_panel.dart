@@ -3,8 +3,12 @@ import 'package:flutter/material.dart';
 /// H12: the day is cleared. Nothing is due and nothing may be anticipated —
 /// `DueCardsPolicy.isDayCleared` decided that, not this widget.
 ///
-/// The three ways out sit side by side, because the requirement is that the
-/// app offers something to do instead of a blank screen.
+/// The three ways out are stacked, because the requirement is that the app
+/// offers something to do instead of a blank screen — and on the 390-point
+/// phone this targets, three buttons sharing one row broke every label across
+/// three lines ("Importa / r mais / pergunt / as"). The empty state of the
+/// study screen already stacks the same three, so this also stops the two
+/// screens disagreeing about what the way out looks like.
 class IdleTimePanel extends StatelessWidget {
   const IdleTimePanel({
     required this.onImportMore,
@@ -35,29 +39,28 @@ class IdleTimePanel extends StatelessWidget {
               style: theme.textTheme.bodySmall,
             ),
             const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: FilledButton(
-                    onPressed: onImportMore,
-                    child: const Text('Importar mais perguntas'),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: FilledButton.tonal(
-                    onPressed: onMockInterview,
-                    child: const Text('Fazer um simulado'),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: onWeakSubjects,
-                    child: const Text('Ver os assuntos fracos'),
-                  ),
-                ),
-              ],
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton(
+                onPressed: onImportMore,
+                child: const Text('Importar mais perguntas'),
+              ),
+            ),
+            const SizedBox(height: 8),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.tonal(
+                onPressed: onMockInterview,
+                child: const Text('Fazer um simulado'),
+              ),
+            ),
+            const SizedBox(height: 8),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton(
+                onPressed: onWeakSubjects,
+                child: const Text('Ver os assuntos fracos'),
+              ),
             ),
           ],
         ),
