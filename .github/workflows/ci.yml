@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  analyze-and-test:
+  test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -51,7 +51,7 @@ jobs:
         run: flutter test --platform chrome --tags=chrome-only
 
   deploy:
-    needs: [analyze-and-test, widget-tests-chrome]
+    needs: [test, widget-tests-chrome]
     if: |
       github.ref == 'refs/heads/main' &&
       (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
