@@ -1,7 +1,6 @@
 import 'dart:math' as math;
 
 import 'package:flashcard_dev_senior/core/clock.dart';
-import 'package:flashcard_dev_senior/domain/models/card.dart';
 import 'package:flashcard_dev_senior/domain/models/enums.dart';
 import 'package:flashcard_dev_senior/domain/models/schedule_window.dart';
 import 'package:flashcard_dev_senior/domain/policies/content_intake_policy.dart';
