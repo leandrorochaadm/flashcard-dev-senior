@@ -27,12 +27,22 @@ Documentos `.md`, mensagens de commit e a conversa continuam em português.
 
 ## Estado atual
 
-O repositório é o **scaffold do `flutter create`** — só `lib/main.dart` e
+O repositório é o **scaffold do `flutter create`** — `lib/main.dart` e
 `test/widget_test.dart`. Nada do handoff foi implementado, mas as dependências já
 estão resolvidas no `pubspec.yaml`: `fsrs 2.0.1`, `sembast_web 2.4.5`,
 `get_it 9.2.1`, `freezed_annotation 3.1.0`, `json_annotation 4.12.0`,
 `collection 1.19.1`, e `build_runner`/`freezed`/`json_serializable` em dev.
 Flutter 3.44.0, Dart SDK `^3.12.0`.
+
+⚠️ **Restos de uma implementação interrompida em 11/08/2026.** Existem cinco
+arquivos soltos em `lib/core/` e `lib/domain/` (`clock.dart`, `models/enums.dart`,
+`models/card.dart`, `models/review_log.dart`, `scheduling/memory_state.dart`),
+escritos numa tentativa de começar pela simulação dos 30 dias e abandonados a
+pedido. **Não estão versionados e não compilam** — `card.dart` e `review_log.dart`
+declaram `part` de arquivos `.freezed.dart`/`.g.dart` que ninguém gerou, então
+`flutter analyze` falha até rodar o `build_runner` ou apagá-los. Ninguém os
+importa. Ao retomar a implementação, decidir explicitamente entre aproveitá-los
+ou remover.
 
 A especificação completa está em dois documentos, que são a fonte da verdade:
 
@@ -192,9 +202,16 @@ antes deles seria furado:
 4. Nivelamento: entre datas candidatas, a de menor carga
 5. **Teto móvel corta por último**
 
-`teto(t) = max(1, N ÷ (20 + 2,67·t))`, com `t` em dias desde 10/08 e `N` = número
-de cartões **liberados** (`introducedAt != null`). O `Duration` é construído em
-**minutos**, não em dias — `Duration(days: 2)` perderia o ",4" de 2,4 dias.
+`teto(r) = max(1, N ÷ (100 − 2,67·r))`, com `r` = dias que **faltam** para
+`targetDate` (limitado a 0..30) e `N` = número de cartões **liberados**
+(`introducedAt != null`). O `Duration` é construído em **minutos**, não em dias —
+`Duration(days: 2)` perderia o ",4" de 2,4 dias.
+
+**É "faltam", não "decorridos"** (decisão de 11/08/2026). Dentro da janela
+original de 30 dias as duas contas coincidem — 11/08 dá 4,4 dias nas duas —,
+então um teste que passe não prova que a implementação está certa. O teste que
+distingue é com `targetDate` remarcada: faltando 10 dias, o teto tem de ser
+~1,4 dia, não ~5. `MovingCeiling` **não depende de `startDate`**.
 
 Três recursos do `package:fsrs` ficam desligados de propósito: `maximumInterval`
 (inteiro em dias, não expressa teto decimal), `enableFuzzing` (espalha antes do
@@ -231,9 +248,13 @@ O teto limita a **data agendada**, nunca a `stability`. Indicadores leem
   estudou pouco". Essa precedência some numa refatoração — tem teste dedicado.
 - **`isReady` tem piso**: `stability >= max(1, diasAté(09/09))`. Sem o `max`, em
   09/09 todo cartão viraria "pronto".
-- **`startDate` = 10/08/2026, `targetDate` = 09/09/2026** (decisão do cliente:
-  data-alvo fixa). O app abre em 11/08, ou seja, no **dia 1**, com teto de 4,4
-  dias — não fixe "5,0 dias" em teste.
+- **`startDate` e `targetDate` são dados de `settings`, não constantes**
+  (decisão de 11/08/2026, que reverteu a data-alvo fixa). `startDate` é a
+  véspera da primeira abertura, gravada uma única vez; `targetDate` é escolhida
+  num calendário e, sem escolha, vale `startDate + 29 dias`. Hoje isso dá
+  10/08/2026 e 09/09/2026, com o app abrindo em 11/08 no **dia 1**, teto de 4,4
+  dias — mas o número vem da janela injetada, não de literal. Nenhum
+  `DateTime(2026, …)` em `domain/`; não fixe "5,0 dias" em teste.
 - **Mudou modelo `freezed` de forma que altere o JSON? Incremente
   `AppDatabase.schemaVersion` e escreva a migração.** Sem isso um backup de
   ontem quebra o app de amanhã — e o backup é a única proteção real contra o
