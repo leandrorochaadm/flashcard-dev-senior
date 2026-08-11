@@ -27,4 +27,31 @@ jobs:
         run: flutter analyze
 
       - name: Test
-        run: flutter test
+        # Excludes tests tagged "chrome-only": they build the app's widget
+        # tree, which reaches `dart:js_interop` (file picker, backup download)
+        # through `core/router.dart`. That library does not exist on the Dart
+        # VM this job runs on — see the `widget-tests-chrome` job below.
+        run: flutter test --exclude-tags=chrome-only
+
+  widget-tests-chrome:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.44.0
+          channel: stable
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Generate freezed/json_serializable code
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      - name: Test (chrome platform)
+        # Covers tests tagged "chrome-only": widget tests that build the real
+        # app shell (needs `dart:js_interop`, which only exists when compiled
+        # for the web) and, if present, the IndexedDB backup round-trip test.
+        # ubuntu-latest ships Chrome preinstalled, so no extra setup needed.
+        run: flutter test --platform chrome --tags=chrome-only
