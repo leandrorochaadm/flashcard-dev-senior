@@ -1,19 +1,27 @@
 #!/bin/sh
-# Regenerates freezed/json_serializable code (now versioned), bumps the build
-# number and runs `flutter analyze` before every push. CI no longer runs
-# analyze — this is the single gate for it, to keep GitHub Actions time down.
+# Bumps the build number, regenerates freezed/json_serializable code and runs
+# `flutter analyze` before every push. CI no longer runs analyze — this is the
+# single gate for it, to keep GitHub Actions time down.
 #
-# WHY THE BUMP ABORTS THE PUSH
+# HOW THE BUMP RIDES ALONG WITH THE PUSH
 #
-# A pre-push hook runs after git has already resolved which commits to send.
-# Committing the bumped pubspec.yaml here would NOT include it in this push:
-# git sends the SHA it read before the hook ran, leaving the local branch one
-# commit ahead of what was published, silently. So the hook bumps, commits and
-# stops, asking for the push to be repeated. On the second run the build
-# number is already ahead of the remote's and the push goes through untouched.
+# A pre-push hook runs after git has already resolved which commits to send, so
+# a commit created here would be left behind — the push would carry the old SHA
+# and the branch would end up silently one commit ahead of the remote.
+#
+# So the hook does the push itself: it bumps, commits, and pushes both commits
+# with --no-verify (which is what keeps it from re-entering this hook). The
+# outer push is then aborted with exit 1, because there is nothing left for it
+# to do. Git prints its usual "failed to push" line; the message below says
+# plainly that the push already happened.
+#
+# The result is what a single `git push` should do: the bump travels with the
+# work, in its own commit.
 set -e
 
-REMOTE_REF="origin/main"
+REMOTE_NAME=${1:-origin}
+BRANCH=$(git rev-parse --abbrev-ref HEAD)
+REMOTE_REF="$REMOTE_NAME/$BRANCH"
 
 read_build() {
   # `version: 1.0.0+7` -> `7`
@@ -30,6 +38,11 @@ else
   REMOTE_BUILD=0
 fi
 
+# Checks that would otherwise run after the push has already left. Doing them
+# first means a failing analyze stops everything, bump included.
+dart run build_runner build --delete-conflicting-outputs
+flutter analyze
+
 if [ "$LOCAL_BUILD" -le "$REMOTE_BUILD" ]; then
   NEXT=$((REMOTE_BUILD + 1))
   CURRENT_VERSION=$(grep '^version:' pubspec.yaml | cut -d: -f2 | tr -d ' ')
@@ -44,10 +57,11 @@ if [ "$LOCAL_BUILD" -le "$REMOTE_BUILD" ]; then
   git commit -m "chore: bump build number to $NEXT"
 
   echo ""
-  echo "Build number bumped to $APP_VERSION+$NEXT and committed."
-  echo "Run 'git push' again — this push was stopped so the bump goes with it."
+  echo "Bumped to $APP_VERSION+$NEXT and pushing it with your commits..."
+  git push --no-verify "$REMOTE_NAME" "$BRANCH"
+
+  echo ""
+  echo "Pushed. The 'failed to push' line below is expected: this hook already"
+  echo "sent everything, including the bump commit. Nothing left to do."
   exit 1
 fi
-
-dart run build_runner build --delete-conflicting-outputs
-flutter analyze
