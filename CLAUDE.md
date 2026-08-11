@@ -27,22 +27,40 @@ Documentos `.md`, mensagens de commit e a conversa continuam em português.
 
 ## Estado atual
 
-O repositório é o **scaffold do `flutter create`** — `lib/main.dart` e
-`test/widget_test.dart`. Nada do handoff foi implementado, mas as dependências já
-estão resolvidas no `pubspec.yaml`: `fsrs 2.0.1`, `sembast_web 2.4.5`,
-`get_it 9.2.1`, `freezed_annotation 3.1.0`, `json_annotation 4.12.0`,
-`collection 1.19.1`, e `build_runner`/`freezed`/`json_serializable` em dev.
-Flutter 3.44.0, Dart SDK `^3.12.0`.
+**As 16 histórias estão implementadas.** `flutter analyze` sai limpo e
+`flutter test` roda 152 testes, com **100% de cobertura de linha em `domain/` e
+`data/`** — nenhum deles usa `WidgetTester`. `flutter build web --release`
+compila; use `tool/build_web.sh`, que carimba versão, build e hash do commit
+(lidos do `pubspec.yaml` e do git) na tela `/sobre`.
 
-⚠️ **Restos de uma implementação interrompida em 11/08/2026.** Existem cinco
-arquivos soltos em `lib/core/` e `lib/domain/` (`clock.dart`, `models/enums.dart`,
-`models/card.dart`, `models/review_log.dart`, `scheduling/memory_state.dart`),
-escritos numa tentativa de começar pela simulação dos 30 dias e abandonados a
-pedido. **Não estão versionados e não compilam** — `card.dart` e `review_log.dart`
-declaram `part` de arquivos `.freezed.dart`/`.g.dart` que ninguém gerou, então
-`flutter analyze` falha até rodar o `build_runner` ou apagá-los. Ninguém os
-importa. Ao retomar a implementação, decidir explicitamente entre aproveitá-los
-ou remover.
+Os cinco arquivos soltos da tentativa interrompida em 11/08/2026 foram
+**aproveitados** — seguiam as regras deste documento — e hoje são parte de
+`lib/core/clock.dart`, `lib/domain/models/` e `lib/domain/scheduling/`.
+
+Decisões tomadas ao implementar, que valem como leitura obrigatória:
+
+- **`relearningSteps` repete os quatro degraus.** O handoff configurava só
+  `[15 min]`, mas os requisitos dizem que o cartão errado passa pelos quatro
+  degraus de novo. Requisito ganha do handoff; está comentado no adapter.
+- **A escada serve `learningSteps[degrau atual]`.** `learningStep` conta os
+  degraus já vencidos, então a primeira resposta devolve 15 min — é a escada
+  desenhada nos requisitos, não o passo interno do pacote.
+- **A data de primeira revisão do cartão importado é o dia projetado de
+  liberação** (`ContentIntakePolicy.projectedReleaseDate`), não um degrau de
+  15 min. É o que espalha o lote de 100 pelos 5 dias na prévia (H5) e o que faz
+  o cartão já estar vencido no dia em que é liberado.
+- **A fila de liberação desempata por `id`**: `List.sort` não é estável e o lote
+  inteiro compartilha o mesmo `importedAt`.
+- **`ReviewLog` guarda `stabilityBefore`**, sem o qual a curva de calibração não
+  pode ser redesenhada com os pesos antigos antes de desfazer um reajuste.
+- **`explicit_to_json: true`** no `build.yaml`: sem isso a sessão interrompida
+  volta sem os placares dos rounds.
+- **O teto em 04/09 é 1,2 dia, não 1,0.** O texto do requisito arredonda; a
+  tabela do próprio documento e a fórmula dizem 1,2. O piso de 1,0 chega em
+  09/09.
+- **`web_database_factory.dart`** existe porque `sembast_web` não compila na VM
+  Dart; se o import morasse no adapter, todo teste de repositório exigiria
+  `--platform chrome`.
 
 A especificação completa está em dois documentos, que são a fonte da verdade:
 
@@ -61,6 +79,8 @@ flutter pub get
 flutter run -d chrome                     # a única plataforma-alvo
 flutter analyze
 flutter test
+flutter test --coverage                                        # domain/ e data/ em 100%
+tool/build_web.sh                                              # release com versão e commit
 flutter test test/domain/scheduling/moving_ceiling_test.dart   # um arquivo
 flutter test --plain-name 'exceeds the daily ceiling'          # um teste
 flutter test --platform chrome                                 # ver abaixo
