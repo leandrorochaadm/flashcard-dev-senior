@@ -13,6 +13,14 @@ import 'package:sembast/sembast_memory.dart';
 
 import '../support/domain_fakes.dart';
 
+/// Never queried: the name of the backup file needs no database.
+final class _NeverUsedDatabase implements AppDatabase {
+  @override
+  dynamic noSuchMethod(Invocation invocation) => throw UnimplementedError();
+}
+
+AppDatabase _never() => _NeverUsedDatabase();
+
 void main() {
   final now = DateTime(2026, 8, 20, 10);
   final importedAt = DateTime(2026, 8, 11);
@@ -114,6 +122,98 @@ void main() {
       'touchedByV1': true,
       'touchedByV2': true,
     });
+  });
+
+  test('the backup file is named after the day it was taken', () {
+    expect(
+      BackupRepository(_never()).fileNameFor(DateTime(2026, 9, 5)),
+      'flashcards-2026-09-05.json',
+    );
+  });
+
+  test('a missing migration step is refused instead of skipped', () {
+    const migrations = SchemaMigrations();
+
+    expect(
+      () => migrations.upgrade({}, fromVersion: 1, toVersion: 2),
+      throwsA(isA<StateError>()),
+    );
+  });
+
+  test('a file that is not a map at all is refused', () async {
+    final db = await openDatabase();
+
+    expect(
+      () => BackupRepository(db).restore('[1, 2, 3]'),
+      throwsA(isA<FormatException>()),
+    );
+    expect(
+      () => BackupRepository(db).restore('{"data": {}}'),
+      throwsA(isA<FormatException>()),
+    );
+  });
+
+  test('restoring points the adapter at the new database, not the old one',
+      () async {
+    final db = await openDatabase();
+    final cards = CardRepository(db);
+    await cards.save(newCard('before', importedAt: importedAt));
+    final file = await BackupRepository(db).export(now);
+    await cards.save(newCard('after', importedAt: importedAt));
+
+    // Same adapter instance: it has to keep writing to the restored database.
+    await BackupRepository(db).restore(file);
+    await cards.save(newCard('later', importedAt: importedAt));
+
+    final reopened = CardRepository(db);
+    await reopened.load();
+    expect(reopened.byId('before'), isNotNull);
+    expect(reopened.byId('after'), isNull, reason: 'restore is destructive');
+    expect(reopened.byId('later'), isNotNull);
+  });
+
+  test('the stacked parameters and their dates survive a reload', () async {
+    final db = await openDatabase();
+    final settings = SettingsRepository(db);
+    await settings.load(now);
+    await settings.applyParameters(List<double>.filled(21, 0.5), now);
+    await settings.applyParameters(
+      List<double>.filled(21, 0.6),
+      now.add(const Duration(days: 7)),
+    );
+
+    final reopened = SettingsRepository(db);
+    await reopened.load(now);
+
+    expect(reopened.activeParameters!.first, 0.6);
+    expect(reopened.parameterHistory.length, 1);
+    expect(reopened.previousParams()!.parameters.first, 0.5);
+    expect(
+      reopened.previousParams()!.appliedAt,
+      now.add(const Duration(days: 7)),
+    );
+  });
+
+  // Defensive: a base written by an older build could carry the anchor with
+  // no target. The window still has to come out complete.
+  test('a base with startDate but no target falls back to the default window',
+      () async {
+    final db = await openDatabase();
+    await db.writeSetting('startDate', DateTime(2026, 8, 10).toIso8601String());
+
+    final settings = SettingsRepository(db);
+    await settings.load(now);
+
+    expect(settings.window.startDate, DateTime(2026, 8, 10));
+    expect(settings.window.targetDate, DateTime(2026, 9, 9));
+  });
+
+  test('closing the database releases it', () async {
+    final db = await openDatabase();
+
+    await db.close();
+
+    expect(() => db.allCards(), throwsA(isA<Object>()));
   });
 
   test('startDate is anchored once and never re-anchored', () async {

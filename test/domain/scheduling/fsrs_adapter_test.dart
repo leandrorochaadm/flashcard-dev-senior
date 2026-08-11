@@ -165,6 +165,31 @@ void main() {
       expect(fresh.toString(), contains('new'));
     });
 
+    test('copyWith with only a date keeps every other field', () {
+      final state = MemoryState(
+        state: CardState.review,
+        step: 3,
+        stability: 12,
+        difficulty: 6,
+        dueAt: now,
+        lastReviewedAt: now,
+      );
+
+      final moved = state.copyWith(dueAt: now.add(const Duration(days: 1)));
+
+      expect(moved.state, CardState.review);
+      expect(moved.step, 3);
+      expect(moved.stability, 12);
+      expect(moved.difficulty, 6);
+      expect(moved.lastReviewedAt, now);
+      expect(moved.dueAt, now.add(const Duration(days: 1)));
+
+      // And the other way around: moving the rung must not clear the date.
+      final rung = state.copyWith(step: 0);
+      expect(rung.dueAt, now);
+      expect(rung.step, 0);
+    });
+
     test('copyWith touches only what it was given', () {
       final fresh = MemoryState.fresh();
 

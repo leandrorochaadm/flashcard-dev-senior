@@ -4,7 +4,9 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('time on card', () {
-    const policy = TimeOnCardPolicy();
+    // Built at runtime, not as a const: this is how get_it registers it.
+    // ignore: prefer_const_constructors
+    final policy = TimeOnCardPolicy();
 
     test('time under the ceiling is recorded', () {
       expect(
@@ -28,7 +30,8 @@ void main() {
   });
 
   group('session', () {
-    const policy = SessionPolicy();
+    // ignore: prefer_const_constructors
+    final policy = SessionPolicy();
     final now = DateTime(2026, 8, 11, 9);
     const subjects = ['Estado', 'Widgets', 'Testes', 'Async', 'Plataforma'];
 
