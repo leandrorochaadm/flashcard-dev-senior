@@ -9,6 +9,16 @@
 # packages, and plugins designed to encourage good coding practices.
 include: package:flutter_lints/flutter.yaml
 
+analyzer:
+  # Código gerado pelo build_runner não é revisado nem corrigido à mão.
+  # Sem este exclude, `flutter analyze` enche de infrações em arquivos que
+  # ninguém edita — e a saída do analisador deixa de ser lida.
+  exclude:
+    - '**/*.freezed.dart'
+    - '**/*.g.dart'
+  errors:
+    invalid_annotation_target: ignore   # ruído conhecido do freezed + json
+
 linter:
   # The lint rules applied to this project can be customized in the
   # section below to disable rules from the `package:flutter_lints/flutter.yaml`
