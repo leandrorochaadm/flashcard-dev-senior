@@ -43,3 +43,6 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Documentos de trabalho e wireframes — fora do controle de versão
+temp/

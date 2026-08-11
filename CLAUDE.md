@@ -46,9 +46,9 @@ ou remover.
 
 A especificação completa está em dois documentos, que são a fonte da verdade:
 
-- **`requisitos-flashcard-dev-senior.md`** — linguagem de negócio, 16 requisitos
+- **`temp/requisitos-flashcard-dev-senior.md`** — linguagem de negócio, 16 requisitos
   essenciais, regras e exceções. Público: o cliente.
-- **`handoff-flashcard-dev-senior.md`** — H1–H16 rastreadas aos requisitos,
+- **`temp/handoff-flashcard-dev-senior.md`** — H1–H16 rastreadas aos requisitos,
   arquitetura, pipeline de agendamento, riscos. Público: o time.
 
 **Nunca invente requisito novo.** Lacuna percebida ao codificar volta para
