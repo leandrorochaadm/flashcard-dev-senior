@@ -43,6 +43,7 @@ void main() {
         rating: Rating.good,
         elapsedDays: 2.5,
         predictedRetention: 0.88,
+        stabilityBefore: 4.2,
         timeOnCard: const Duration(seconds: 12),
         source: ReviewSource.session,
       ),

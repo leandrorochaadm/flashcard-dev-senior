@@ -26,6 +26,10 @@ sealed class ReviewLog with _$ReviewLog {
     required Rating rating,
     required double elapsedDays, // real interval since the previous review
     required double predictedRetention, // what the app predicted
+    // Stability the card carried INTO this review. It is what allows the
+    // calibration curve to be recomputed with older weights, which the undo
+    // button of the self-tuning needs (decided 11/08/2026).
+    required double stabilityBefore,
     @_MillisecondsConverter()
     required Duration? timeOnCard, // null when over 60s (dropped from average)
     required ReviewSource source,
