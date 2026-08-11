@@ -129,17 +129,22 @@ class _Ready extends StatelessWidget {
               }
             },
           ),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Expanded(child: FirmTodayTile(firmedToday: ready.firmedToday)),
-            Expanded(
-              child: AccuracyVsTargetTile(
-                accuracy: ready.accuracy,
-                target: ready.targetRetention,
+        // `IntrinsicHeight`, not `crossAxisAlignment: stretch`: inside a
+        // `ListView` the row's height is unbounded, and stretching against
+        // infinity aborts the build of everything below it.
+        IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(child: FirmTodayTile(firmedToday: ready.firmedToday)),
+              Expanded(
+                child: AccuracyVsTargetTile(
+                  accuracy: ready.accuracy,
+                  target: ready.targetRetention,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
         _LastSessionTile(session: ready.lastSession),
         SubjectMap(
