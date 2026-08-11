@@ -1,0 +1,26 @@
+# Cache rules for Cloudflare Workers static assets.
+#
+# Files under web/ are copied verbatim into build/web/ by `flutter build web`,
+# and `wrangler.toml` serves that directory, so this file ships with the bundle.
+#
+# WHY EVERYTHING REVALIDATES
+#
+# The usual advice is "no-cache the entry points, immutable the hashed assets".
+# It does not apply here: **Flutter web emits no hashed filenames**. Checking a
+# real build/web shows main.dart.js, flutter.js, assets/AssetManifest.bin,
+# assets/fonts/MaterialIcons-Regular.otf and canvaskit/canvaskit.wasm — every
+# one a fixed name whose contents change between builds. Marking those
+# `immutable` would pin a year-old font or an old main.dart.js in the browser
+# with no way to evict it, which is worse than the staleness it tries to fix.
+#
+# `no-cache` does not mean "do not store". It means "revalidate before using":
+# the browser keeps the bytes and sends an If-None-Match, and Cloudflare
+# answers 304 when nothing changed. The cost is one conditional request per
+# file; the benefit is that a deploy is always picked up.
+#
+# This matters more than usual here because, as of Flutter 3.44, the generated
+# service worker caches nothing — it unregisters itself on activate. The HTTP
+# cache is the only cache this app has.
+
+/*
+  Cache-Control: no-cache
