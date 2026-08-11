@@ -83,7 +83,7 @@ flutter test --coverage                                        # domain/ e data/
 tool/build_web.sh                                              # release com versão e commit
 flutter test test/domain/scheduling/moving_ceiling_test.dart   # um arquivo
 flutter test --plain-name 'exceeds the daily ceiling'          # um teste
-flutter test --platform chrome                                 # ver abaixo
+flutter test --platform chrome --tags=chrome-only              # ver abaixo
 flutter build web --release
 dart run build_runner build --delete-conflicting-outputs       # freezed/json
 dart run build_runner watch --delete-conflicting-outputs
@@ -296,6 +296,27 @@ Oito testes obrigatórios estão tabelados em _Estratégia de testes_ no handoff
 mais frágeis são a ordem das 5 operações e a precedência da carga inicial.
 
 Widgets de gráfico e layout do painel **não** precisam de teste automatizado.
+
+**Teste de widget roda em tela de celular.** O alvo é um PWA no celular, e o padrão
+do `WidgetTester` é 800×600 — uma tela que nenhum usuário tem e larga o bastante
+para esconder exatamente o estouro que um celular mostraria. Todo `testWidgets`
+chama `useScreenSize(tester)` antes do `pumpWidget`:
+
+```dart
+useScreenSize(tester);                             // 390×844, o padrão
+useScreenSize(tester, size: ScreenSize.smallPhone); // 360×640, o piso do layout
+```
+
+`test/support/screen_sizes.dart` registra o tear-down sozinho, então nenhum teste
+vaza tamanho para o seguinte. O valor vale igual na máquina e no CI: o
+`WidgetTester` desenha numa `TestFlutterView` virtual, nunca na janela real.
+
+**Os arquivos marcados `@TestOn('browser')` são pulados no `flutter test`** e rodam
+no job `widget-tests-chrome` do CI, via `flutter test --platform chrome
+--tags=chrome-only`. Eles alcançam `dart:js_interop` (por `sembast_web` e por
+`core/router.dart`), que não existe na VM Dart. A anotação é o que faz um
+`flutter test` local sair limpo em vez de falhar ao compilar — a tag sozinha só
+ajuda quem lembra de passar `--exclude-tags`.
 
 ## Ordem de implementação
 

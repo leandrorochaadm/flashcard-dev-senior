@@ -1,0 +1,10 @@
+# Declares the tags the suite uses, so the runner does not warn about unknown
+# ones. The files carrying `chrome-only` also carry `@TestOn('browser')`, which
+# is what makes a plain `flutter test` skip them instead of failing to compile:
+# they reach `dart:js_interop` through `sembast_web` and `core/router.dart`,
+# and that library does not exist on the Dart VM.
+#
+# CI runs them in the `widget-tests-chrome` job:
+#   flutter test --platform chrome --tags=chrome-only
+tags:
+  chrome-only:

@@ -1,3 +1,4 @@
+@TestOn('browser')
 @Tags(['chrome-only'])
 library;
 
@@ -25,6 +26,12 @@ library;
 // excludes this tag — loading this file on the Dart VM is not possible: the
 // `web` package (via `sembast_web`) reaches `dart:js_interop`, which does
 // not exist off the web compiler.
+//
+// `@TestOn('browser')` is what makes a plain `flutter test` — the command
+// `CLAUDE.md` documents — report this file as skipped instead of failing to
+// compile. The tag alone did not: it only works for someone who remembers to
+// pass `--exclude-tags`, and three red files on every local run teach the
+// team to ignore red.
 import 'package:flashcard_dev_senior/data/database/app_database.dart';
 import 'package:flashcard_dev_senior/data/database/sembast_adapter.dart';
 import 'package:flashcard_dev_senior/data/database/web_database_factory.dart';

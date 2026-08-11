@@ -1,3 +1,4 @@
+@TestOn('browser')
 @Tags(['chrome-only'])
 library;
 
@@ -10,6 +11,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sembast/sembast_memory.dart';
 
 import '../../support/domain_fakes.dart';
+import '../../support/screen_sizes.dart';
 
 /// The one `WidgetTester` test in the project (see CLAUDE.md — every other
 /// test avoids it on purpose). It exists to catch wiring mistakes that unit
@@ -25,10 +27,13 @@ import '../../support/domain_fakes.dart';
 /// and `browser_download.dart`, both `dart:js_interop`. That library does not
 /// exist on the Dart VM, so loading this file under the plain `flutter test`
 /// runner fails to compile; it only exists under the `chrome` platform,
-/// which compiles to JS. The CI workflow (`.github/workflows/ci.yml`) runs
-/// `flutter test` on the VM only, so this file needs its own job to run in
-/// CI — see the `widget_smoke_chrome` job if one was added, or run it
-/// manually otherwise.
+/// which compiles to JS.
+///
+/// In CI it is the `widget-tests-chrome` job of `.github/workflows/ci.yml`
+/// that runs it, via `flutter test --platform chrome --tags=chrome-only`.
+/// `@TestOn('browser')` makes a plain local `flutter test` skip this file
+/// instead of failing to compile — the tag alone only helps whoever remembers
+/// to pass `--exclude-tags`.
 void main() {
   final now = DateTime(2026, 8, 20, 10);
   final importedAt = DateTime(2026, 8, 11);
@@ -66,6 +71,11 @@ void main() {
   testWidgets(
     'picking a subject, revealing and rating a card advances the session',
     (tester) async {
+      // The study session ships on a phone. At the 800x600 default the four
+      // rating buttons have room they do not have in production, so the test
+      // would pass on a layout the user never sees.
+      useScreenSize(tester);
+
       await tester.pumpWidget(
         const MaterialApp(home: SessionView()),
       );
@@ -98,4 +108,33 @@ void main() {
       expect(find.text('Pergunta due-2'), findsOneWidget);
     },
   );
+
+  // The four labels are the client's own words and cannot be shortened, so the
+  // narrowest phone is where they either fit or overflow. A `RenderFlex`
+  // overflow fails the test on its own — `tester.takeException` is here to say
+  // so out loud instead of leaving a red stripe in a screenshot nobody takes.
+  testWidgets('the rating buttons survive the narrowest phone', (tester) async {
+    useScreenSize(tester, size: ScreenSize.smallPhone);
+
+    await tester.pumpWidget(const MaterialApp(home: SessionView()));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Estado'));
+    await tester.pump();
+    await tester.tap(find.widgetWithText(FilledButton, 'Começar (1/1)'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Mostrar resposta'));
+    await tester.pumpAndSettle();
+
+    for (final label in const [
+      'Errei',
+      'Lembrei só uma parte',
+      'Lembrei com esforço',
+      'Sabia de cor',
+    ]) {
+      expect(find.text(label), findsOneWidget, reason: label);
+    }
+    expect(tester.takeException(), isNull);
+  });
 }

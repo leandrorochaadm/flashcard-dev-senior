@@ -1,0 +1,53 @@
+#!/bin/sh
+# Regenerates freezed/json_serializable code (now versioned), bumps the build
+# number and runs `flutter analyze` before every push. CI no longer runs
+# analyze — this is the single gate for it, to keep GitHub Actions time down.
+#
+# WHY THE BUMP ABORTS THE PUSH
+#
+# A pre-push hook runs after git has already resolved which commits to send.
+# Committing the bumped pubspec.yaml here would NOT include it in this push:
+# git sends the SHA it read before the hook ran, leaving the local branch one
+# commit ahead of what was published, silently. So the hook bumps, commits and
+# stops, asking for the push to be repeated. On the second run the build
+# number is already ahead of the remote's and the push goes through untouched.
+set -e
+
+REMOTE_REF="origin/main"
+
+read_build() {
+  # `version: 1.0.0+7` -> `7`
+  printf '%s' "$1" | grep '^version:' | cut -d: -f2 | tr -d ' ' | sed 's/.*+//'
+}
+
+LOCAL_BUILD=$(read_build "$(cat pubspec.yaml)")
+
+# A branch that never reached the remote has nothing to compare against; treat
+# the remote build as 0 so the first push still bumps.
+if git rev-parse --verify --quiet "$REMOTE_REF" >/dev/null; then
+  REMOTE_BUILD=$(read_build "$(git show "$REMOTE_REF:pubspec.yaml")")
+else
+  REMOTE_BUILD=0
+fi
+
+if [ "$LOCAL_BUILD" -le "$REMOTE_BUILD" ]; then
+  NEXT=$((REMOTE_BUILD + 1))
+  CURRENT_VERSION=$(grep '^version:' pubspec.yaml | cut -d: -f2 | tr -d ' ')
+  APP_VERSION=${CURRENT_VERSION%%+*}
+
+  # A temp file plus mv, because `sed -i` differs between BSD and GNU and this
+  # repo is developed on macOS but built on ubuntu-latest.
+  sed "s/^version:.*/version: $APP_VERSION+$NEXT/" pubspec.yaml > pubspec.yaml.tmp
+  mv pubspec.yaml.tmp pubspec.yaml
+
+  git add pubspec.yaml
+  git commit -m "chore: bump build number to $NEXT"
+
+  echo ""
+  echo "Build number bumped to $APP_VERSION+$NEXT and committed."
+  echo "Run 'git push' again — this push was stopped so the bump goes with it."
+  exit 1
+fi
+
+dart run build_runner build --delete-conflicting-outputs
+flutter analyze
