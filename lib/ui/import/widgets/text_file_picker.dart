@@ -39,3 +39,55 @@ Future<String?> pickTextFile({String accept = '.md,.txt,text/plain'}) {
   input.click();
   return completer.future;
 }
+
+/// Same as [pickTextFile], but lets the user select several `.md` files at
+/// once and reads every one of them.
+///
+/// Returns an empty list when the dialog is dismissed. A file that fails to
+/// read is skipped rather than failing the whole batch — one bad file should
+/// not block importing the rest.
+Future<List<String>> pickTextFiles({String accept = '.md,.txt,text/plain'}) {
+  final completer = Completer<List<String>>();
+  final input = web.document.createElement('input') as web.HTMLInputElement
+    ..type = 'file'
+    ..accept = accept
+    ..multiple = true;
+
+  input.onchange = ((web.Event _) {
+    final files = input.files;
+    if (files == null || files.length == 0) {
+      if (!completer.isCompleted) completer.complete(const []);
+      return;
+    }
+
+    final contents = List<String?>.filled(files.length, null);
+    var remaining = files.length;
+
+    void checkDone() {
+      remaining--;
+      if (remaining == 0 && !completer.isCompleted) {
+        completer.complete([for (final c in contents) ?c]);
+      }
+    }
+
+    for (var i = 0; i < files.length; i++) {
+      final file = files.item(i);
+      if (file == null) {
+        checkDone();
+        continue;
+      }
+      final reader = web.FileReader();
+      final index = i;
+      reader.onload = ((web.Event _) {
+        final result = reader.result;
+        contents[index] = result.isA<JSString>() ? (result! as JSString).toDart : null;
+        checkDone();
+      }).toJS;
+      reader.onerror = ((web.Event _) => checkDone()).toJS;
+      reader.readAsText(file);
+    }
+  }).toJS;
+
+  input.click();
+  return completer.future;
+}

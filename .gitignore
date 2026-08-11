@@ -50,3 +50,4 @@ temp/
 # Código gerado (freezed / json_serializable) — regerado com build_runner
 *.freezed.dart
 *.g.dart
+.wrangler/

@@ -38,11 +38,15 @@ class _ImportViewState extends State<ImportView> {
     super.dispose();
   }
 
-  Future<void> _pickFile() async {
-    final contents = await pickTextFile();
-    if (contents == null || !mounted) return;
-    _controller.text = contents;
-    _viewModel.parse(contents);
+  Future<void> _pickFiles() async {
+    final contents = await pickTextFiles();
+    if (contents.isEmpty || !mounted) return;
+    // Each file becomes its own block group; the parser already splits cards
+    // on a `---` line, so joining files that way merges every file's cards
+    // into a single preview without touching the domain parser.
+    final merged = contents.join('\n\n---\n\n');
+    _controller.text = merged;
+    _viewModel.parse(merged);
   }
 
   void _backToEditing() {
@@ -90,9 +94,9 @@ class _ImportViewState extends State<ImportView> {
           children: [
             CopyTemplateButton(template: _viewModel.template),
             OutlinedButton.icon(
-              onPressed: _pickFile,
+              onPressed: _pickFiles,
               icon: const Icon(Icons.upload_file),
-              label: const Text('Enviar arquivo'),
+              label: const Text('Enviar arquivo(s)'),
             ),
           ],
         ),
