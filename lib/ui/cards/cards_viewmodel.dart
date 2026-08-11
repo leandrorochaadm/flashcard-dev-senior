@@ -6,6 +6,7 @@ import '../../core/clock.dart';
 import '../../data/repositories/card_repository.dart';
 import '../../data/repositories/settings_repository.dart';
 import '../../domain/models/card.dart';
+import '../../domain/policies/card_listing_policy.dart';
 import 'cards_state.dart';
 
 /// The collection window (H7): every card, narrowed by subject, with the
@@ -41,11 +42,10 @@ class CardsViewModel {
     try {
       final all = _cards.all;
       final selected = _selectedSubject;
-      // TODO(pontos em aberto): a ordem de listagem da coleção não está
-      // definida nos requisitos; por ora sai na ordem do repositório.
-      final shown = selected == null
+      final narrowed = selected == null
           ? all
           : all.where((card) => card.subject == selected).toList();
+      final shown = CardListingPolicy.sortForCollection(narrowed);
 
       state.value = CardsState.ready(
         cards: shown,
