@@ -76,9 +76,17 @@ final class ContentIntakePolicy {
   /// Days of history the steady rate looks back on.
   static const recentDays = 3;
 
+  /// Oldest import first, ties broken by id: `List.sort` is not stable, and a
+  /// whole batch shares the same `importedAt`, so without the tie-break the
+  /// daily batch would come out in a different order on every call — and the
+  /// projected release dates shown in the preview would stop matching what is
+  /// actually released.
   List<Card> get _pending =>
       _collection.all.where((card) => !card.isReleased).toList()
-        ..sort((a, b) => a.importedAt.compareTo(b.importedAt));
+        ..sort((a, b) {
+          final byImport = a.importedAt.compareTo(b.importedAt);
+          return byImport != 0 ? byImport : a.id.compareTo(b.id);
+        });
 
   /// Today's batch. The caller stamps `introducedAt` and saves.
   IntakeRelease releaseToday(DateTime now) {
@@ -164,6 +172,19 @@ final class ContentIntakePolicy {
       if (entry.value > target) return true;
     }
     return false;
+  }
+
+  /// The day the [index]-th pending card is expected to be released, counting
+  /// from [now] at the daily rate of the initial load.
+  ///
+  /// It is what the import preview shows as "first review date": the block of
+  /// 100 does not land on a single day, it enters ~20 a day over five days —
+  /// which is the spread H5 asks to be checked right on the import screen.
+  /// [batchSize] is the size of the batch being imported, not the collection:
+  /// at preview time the cards are not in the database yet.
+  DateTime projectedReleaseDate(int index, int batchSize, DateTime now) {
+    final perDay = math.max(1, (batchSize / initialLoadDays).ceil());
+    return now.add(Duration(days: index ~/ perDay));
   }
 
   /// Share of released cards that are firm — the number the 80% warning shows.

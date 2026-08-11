@@ -216,16 +216,4 @@ void main() {
     expect(dateOnly(answered.dueAt!), isNot(dateOnly(crowdedDay)));
   });
 
-  test('a freshly released block does not all fall due on the same day', () {
-    final built = build(releasedCards: 0);
-    final now = DateTime(2026, 8, 11, 9);
-    final scheduler = built.scheduler;
-
-    final dates = <DateTime>{
-      for (var i = 0; i < 100; i++) scheduler.firstDueDate(now),
-    };
-
-    expect(dates.length, greaterThan(1),
-        reason: 'H5 is checked on the import screen, not weeks later');
-  });
 }

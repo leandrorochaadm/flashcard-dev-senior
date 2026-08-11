@@ -2,9 +2,8 @@ import 'package:flashcard_dev_senior/domain/import/import_service.dart';
 import 'package:flashcard_dev_senior/domain/import/markdown_parser.dart';
 import 'package:flashcard_dev_senior/domain/models/enums.dart';
 import 'package:flashcard_dev_senior/domain/models/schedule_window.dart';
-import 'package:flashcard_dev_senior/domain/scheduling/card_scheduler.dart';
-import 'package:flashcard_dev_senior/domain/scheduling/fsrs_adapter.dart';
-import 'package:flashcard_dev_senior/domain/scheduling/moving_ceiling.dart';
+import 'package:flashcard_dev_senior/domain/policies/content_intake_policy.dart';
+import 'package:flashcard_dev_senior/domain/policies/due_cards_policy.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../support/domain_fakes.dart';
@@ -36,12 +35,13 @@ void main() {
 
   ({ImportService service, FakeCollection collection}) build() {
     final collection = FakeCollection();
-    final scheduler = CardScheduler(
-      FsrsAdapter(),
-      MovingCeiling(FakeWindow(window), collection),
+    final intake = ContentIntakePolicy(
+      FakeWindow(window),
       collection,
+      FakeHistory(),
+      DueCardsPolicy(collection),
     );
-    return (service: ImportService(collection, scheduler), collection: collection);
+    return (service: ImportService(collection, intake), collection: collection);
   }
 
   test('new cards enter unreleased, with a first review date already set', () {
@@ -114,7 +114,8 @@ void main() {
     expect(again.updated, isEmpty);
   });
 
-  test('a block of 100 does not all get the same first review date', () {
+  test('a block of 100 does not all get the same first review date — it is '
+      'spread over the days of the initial load', () {
     final built = build();
     final source = [
       for (var i = 1; i <= 100; i++)

@@ -87,13 +87,6 @@ final class CardScheduler {
     );
   }
 
-  /// First due date of a card that has just been released for study.
-  ///
-  /// It is what the import preview shows to prove the spread (H5) without
-  /// waiting weeks — the whole imported block must not land on one day.
-  DateTime firstDueDate(DateTime now) =>
-      _clampToCeiling(now.add(_loadBalanceOffset(now, learningSteps.first)), now);
-
   /// Interval each of the four buttons would produce, with no fuzz, so the
   /// answer screen can show them side by side and they stay stable.
   Map<Rating, Duration> previewIntervals(Card card, DateTime now) {
@@ -154,12 +147,6 @@ final class CardScheduler {
       return byLoad != 0 ? byLoad : a.compareTo(b);
     });
     return options.first;
-  }
-
-  /// Same band logic for a brand new card, whose interval is the first step.
-  Duration _loadBalanceOffset(DateTime now, Duration interval) {
-    final balanced = _loadBalance(now.add(_fuzz(interval)), interval, now);
-    return balanced.difference(now);
   }
 
   Map<DateTime, int> _loadByDay() {

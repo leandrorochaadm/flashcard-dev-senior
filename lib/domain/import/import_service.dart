@@ -2,8 +2,8 @@ import 'package:collection/collection.dart';
 
 import '../models/card.dart';
 import '../models/enums.dart';
+import '../policies/content_intake_policy.dart';
 import '../ports.dart';
-import '../scheduling/card_scheduler.dart';
 import 'import_preview.dart';
 
 /// What confirming an import would do, card by card.
@@ -27,10 +27,10 @@ final class ImportOutcome {
 /// read it as a new card and lose the history — documented behavior, and the
 /// reason the template ships with `id:` already filled in.
 final class ImportService {
-  const ImportService(this._collection, this._scheduler);
+  const ImportService(this._collection, this._intake);
 
   final CollectionView _collection;
-  final CardScheduler _scheduler;
+  final ContentIntakePolicy _intake;
 
   ImportOutcome resolve(ImportPreview preview, DateTime now) {
     final created = <Card>[];
@@ -39,7 +39,7 @@ final class ImportService {
     for (final parsed in preview.valid) {
       final existing = _match(parsed);
       if (existing == null) {
-        created.add(_newCard(parsed, now));
+        created.add(_newCard(parsed, now, created.length, preview.valid.length));
       } else {
         // Updates the wording, keeps every bit of study history.
         updated.add(
@@ -65,7 +65,8 @@ final class ImportService {
         .firstWhereOrNull((card) => card.question == parsed.question);
   }
 
-  Card _newCard(ParsedCard parsed, DateTime now) => Card(
+  Card _newCard(ParsedCard parsed, DateTime now, int position, int batchSize) =>
+      Card(
         id: parsed.id ?? _idFromQuestion(parsed.question, now),
         question: parsed.question,
         answer: parsed.answer,
@@ -75,9 +76,10 @@ final class ImportService {
         difficultyFsrs: 0,
         state: CardState.newCard,
         learningStep: 0,
-        // Already spread: the preview shows these dates and they are not all
-        // identical, which is the acceptance criterion of H5.
-        dueAt: _scheduler.firstDueDate(now),
+        // The day the intake policy is expected to release it — the preview
+        // shows these dates and they are not all identical, which is the
+        // acceptance criterion of H5. Once released, the card is due at once.
+        dueAt: _intake.projectedReleaseDate(position, batchSize, now),
         lapses: 0,
         reps: 0,
         lastReviewedAt: null,

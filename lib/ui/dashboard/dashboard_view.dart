@@ -72,6 +72,11 @@ class _DashboardViewState extends State<DashboardView> {
           icon: const Icon(Icons.save_alt),
           tooltip: 'Cópia de segurança',
         ),
+        IconButton(
+          onPressed: () => Navigator.of(context).pushNamed(AppRoutes.about),
+          icon: const Icon(Icons.info_outline),
+          tooltip: 'Sobre',
+        ),
       ],
       child: ValueListenableBuilder<DashboardState>(
         valueListenable: _viewModel.state,

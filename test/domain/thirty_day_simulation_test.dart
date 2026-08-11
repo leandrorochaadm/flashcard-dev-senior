@@ -37,16 +37,16 @@ void main() {
     );
     final answers = math.Random(7);
 
-    // The 100 cards enter the database at once, each with its first review
-    // date already spread — that is what the import preview shows (H5).
-    // Releasing them for study is a separate decision (H16).
+    // The 100 cards enter the database at once, each due on the day the
+    // intake policy is expected to release it — which is what the import
+    // preview shows (H5). Releasing them for study is a separate decision.
     for (var i = 0; i < 100; i++) {
       collection.save(
         newCard(
           'c${i.toString().padLeft(3, '0')}',
           subject: subjects[i % subjects.length],
           importedAt: firstOpening,
-          dueAt: scheduler.firstDueDate(firstOpening),
+          dueAt: intake.projectedReleaseDate(i, 100, firstOpening),
         ),
       );
     }

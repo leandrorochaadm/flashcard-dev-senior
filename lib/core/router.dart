@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../ui/about/about_view.dart';
 import '../ui/backup/backup_view.dart';
 import '../ui/cards/cards_view.dart';
 import '../ui/dashboard/dashboard_view.dart';
@@ -16,6 +17,7 @@ abstract final class AppRoutes {
   static const cards = '/cartoes';
   static const backup = '/backup';
   static const mockInterview = '/simulado';
+  static const about = '/sobre';
   static const subject = '/assunto';
 
   /// Hidden on purpose: no link in the navigation points here.
@@ -31,6 +33,7 @@ Route<Object?> onGenerateRoute(RouteSettings settings) {
         AppRoutes.cards => const CardsView(),
         AppRoutes.backup => const BackupView(),
         AppRoutes.mockInterview => const MockInterviewView(),
+        AppRoutes.about => const AboutView(),
         AppRoutes.subject =>
           SubjectDetailView(subject: settings.arguments! as String),
         AppRoutes.debug => const TimeTravelView(),

@@ -1,12 +1,12 @@
 {
-    "name": "flashcard_dev_senior",
-    "short_name": "flashcard_dev_senior",
+    "name": "Flashcards — entrevista Flutter sênior",
+    "short_name": "Flashcards",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
-    "orientation": "portrait-primary",
+    "background_color": "#FFFFFF",
+    "theme_color": "#2F6FEB",
+    "description": "Cartões de estudo com repetição espaçada para a entrevista de Flutter sênior. Funciona sem internet.",
+    "orientation": "any",
     "prefer_related_applications": false,
     "icons": [
         {
