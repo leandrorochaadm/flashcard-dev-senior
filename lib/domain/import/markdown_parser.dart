@@ -20,6 +20,10 @@ final class MarkdownParser {
     for (var i = 0; i < blocks.length; i++) {
       final block = blocks[i];
       if (block.trim().isEmpty) continue;
+      // A block with neither marker is not a card at all — it is the prose the
+      // template carries before the first separator. Ignored, not marked.
+      if (!_hasAnySectionMarker(block)) continue;
+
       final issues = <ImportIssue>[];
       final parsed = _parseBlock(block, i, issues);
       if (parsed != null) {
@@ -53,6 +57,16 @@ final class MarkdownParser {
     }
     blocks.add(current.join('\n'));
     return blocks;
+  }
+
+  bool _hasAnySectionMarker(String block) {
+    var insideFence = false;
+    for (final line in block.split('\n')) {
+      final trimmed = line.trim();
+      if (trimmed.startsWith('```')) insideFence = !insideFence;
+      if (!insideFence && _sectionMarker(trimmed) != null) return true;
+    }
+    return false;
   }
 
   ParsedCard? _parseBlock(String block, int index, List<ImportIssue> issues) {
