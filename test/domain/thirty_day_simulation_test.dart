@@ -53,15 +53,20 @@ void main() {
 
     final reviewsPerDay = <int, int>{};
     var releasedOnDayFive = 0;
+    DateTime? lastRelease;
 
     for (var day = 1; day <= 30; day++) {
       final dayStart = dateOnly(clock.now()).add(const Duration(hours: 8));
       clock.set(dayStart);
 
-      // 1. release today's batch (H16).
-      final release = intake.releaseToday(clock.now());
+      // 1. release today's batch (H16). The policy hands the cards back
+      //    already stamped, and refuses a second batch on the same day — the
+      //    journal a repository keeps in production is a local variable here.
+      final release =
+          intake.releaseToday(clock.now(), lastReleasedOn: lastRelease);
+      if (release.cards.isNotEmpty) lastRelease = clock.now();
       for (final card in release.cards) {
-        collection.save(card.copyWith(introducedAt: clock.now()));
+        collection.save(card);
       }
       if (day == 5) {
         releasedOnDayFive =

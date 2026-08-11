@@ -23,6 +23,9 @@ enum IntakeReason {
 
   /// Nothing left to release.
   nothingPending,
+
+  /// The day's batch already went out; nothing more today.
+  alreadyReleasedToday,
 }
 
 final class IntakeRelease {
@@ -41,13 +44,29 @@ final class IntakeRelease {
   bool get shouldWarn =>
       reason == IntakeReason.heldByForecast ||
       reason == IntakeReason.reducedByLowStudy;
+
+  /// Whether this outcome settles the intake for the day, so no second batch
+  /// goes out and the reason can be persisted and shown until midnight.
+  ///
+  /// `nothingPending` is the one that does not: it is the answer on a fresh
+  /// install, before the first import, and treating it as settled would hold
+  /// the whole collection back until tomorrow — the bug this guard exists to
+  /// prevent, with the sign flipped. Every other outcome is a decision the
+  /// policy took for today, including the ones that release nothing.
+  ///
+  /// It lives here and not in the caller because getting it wrong means the
+  /// user studies the wrong cards, which is the test for domain.
+  bool get decidesTheDay =>
+      reason != IntakeReason.nothingPending &&
+      reason != IntakeReason.alreadyReleasedToday;
 }
 
 /// Importing is not releasing (H16).
 ///
 /// The 100 cards enter the database at once — that is what lets the import
 /// screen prove the spread — but only ~20 a day become studiable. This is the
-/// only class that writes `introducedAt`.
+/// only class that writes `introducedAt`: it hands the batch back already
+/// stamped, so no caller can grow a second opinion about what "released" means.
 final class ContentIntakePolicy {
   const ContentIntakePolicy(
     this._window,
@@ -88,8 +107,23 @@ final class ContentIntakePolicy {
           return byImport != 0 ? byImport : a.id.compareTo(b.id);
         });
 
-  /// Today's batch. The caller stamps `introducedAt` and saves.
-  IntakeRelease releaseToday(DateTime now) {
+  /// Today's batch, already stamped with `introducedAt`. The caller only saves.
+  ///
+  /// [lastReleasedOn] is the day the previous batch went out, or `null` if none
+  /// ever did. Releasing twice on the same day would collapse the five-day
+  /// ramp: with 100 pending, the first call frees ceil(100/5) = 20 and a second
+  /// one frees ceil(80/5) = 16 on top of it. The guard lives here, and not in
+  /// the caller, because every new call site would otherwise be a fresh chance
+  /// to duplicate the batch.
+  IntakeRelease releaseToday(DateTime now, {DateTime? lastReleasedOn}) {
+    if (lastReleasedOn != null && dateOnly(lastReleasedOn) == dateOnly(now)) {
+      return const IntakeRelease(
+        cards: [],
+        quota: 0,
+        reason: IntakeReason.alreadyReleasedToday,
+      );
+    }
+
     final pending = _pending;
     if (pending.isEmpty) {
       return const IntakeRelease(
@@ -107,7 +141,7 @@ final class ContentIntakePolicy {
       // exists to prevent.
       final quota = _initialLoadQuota(pending.length, dayOfUse);
       return IntakeRelease(
-        cards: pending.take(quota).toList(),
+        cards: _stamped(pending, quota, now),
         quota: quota,
         reason: IntakeReason.initialLoad,
       );
@@ -124,13 +158,18 @@ final class ContentIntakePolicy {
     final steady = _steadyQuota(now);
     final baseline = _dailyBaseline();
     return IntakeRelease(
-      cards: pending.take(steady).toList(),
+      cards: _stamped(pending, steady, now),
       quota: steady,
       reason: steady < baseline
           ? IntakeReason.reducedByLowStudy
           : IntakeReason.steady,
     );
   }
+
+  /// The first [quota] pending cards, released as of [now].
+  List<Card> _stamped(List<Card> pending, int quota, DateTime now) => [
+        for (final card in pending.take(quota)) card.copyWith(introducedAt: now),
+      ];
 
   /// Spreads what is still pending over the days left in the initial load, so
   /// a mid-window import does not pile up on the last day.

@@ -1,4 +1,7 @@
+import 'package:collection/collection.dart';
+
 import '../../domain/models/schedule_window.dart';
+import '../../domain/policies/content_intake_policy.dart';
 import '../../domain/ports.dart';
 import '../database/app_database.dart';
 
@@ -28,7 +31,7 @@ final class ParameterSnapshot {
 
 /// Everything that is a datum and not a constant: the window, the weights and
 /// the counters that drive the self-tuning.
-final class SettingsRepository implements ScheduleWindowView {
+final class SettingsRepository implements ScheduleWindowView, ReleaseJournal {
   SettingsRepository(this._db);
 
   static const _keyStartDate = 'startDate';
@@ -38,6 +41,9 @@ final class SettingsRepository implements ScheduleWindowView {
   static const _keyReviewsSinceTuning = 'reviewsSinceTuning';
   static const _keyLastBackupAt = 'lastBackupAt';
   static const _keyDeadlineAnswered = 'deadlineAnswered';
+  static const _keyLastReleaseAt = 'lastReleaseAt';
+  static const _keyLastReleaseReason = 'lastReleaseReason';
+  static const _keyLastReleaseQuota = 'lastReleaseQuota';
 
   final AppDatabase _db;
 
@@ -47,6 +53,9 @@ final class SettingsRepository implements ScheduleWindowView {
   int _reviewsSinceTuning = 0;
   DateTime? _lastBackup;
   bool _deadlineAnswered = false;
+  DateTime? _lastReleaseAt;
+  IntakeReason? _lastReleaseReason;
+  int? _lastReleaseQuota;
 
   @override
   ScheduleWindow get window {
@@ -99,6 +108,16 @@ final class SettingsRepository implements ScheduleWindowView {
     _lastBackup = backup == null ? null : DateTime.parse(backup);
     _deadlineAnswered =
         (await _db.readSetting(_keyDeadlineAnswered) as bool?) ?? false;
+
+    final lastRelease = await _db.readSetting(_keyLastReleaseAt) as String?;
+    _lastReleaseAt = lastRelease == null ? null : DateTime.parse(lastRelease);
+    final reason = await _db.readSetting(_keyLastReleaseReason) as String?;
+    // `firstWhereOrNull`: a name written by a newer build is a business-normal
+    // "not found", not a crash on startup.
+    _lastReleaseReason = reason == null
+        ? null
+        : IntakeReason.values.firstWhereOrNull((value) => value.name == reason);
+    _lastReleaseQuota = await _db.readSetting(_keyLastReleaseQuota) as int?;
   }
 
   /// Re-picking the target re-anchors nothing: the ceiling counts the days
@@ -169,5 +188,30 @@ final class SettingsRepository implements ScheduleWindowView {
   Future<void> setDeadlineAnswered(bool value) async {
     _deadlineAnswered = value;
     await _db.writeSetting(_keyDeadlineAnswered, value);
+  }
+
+  @override
+  DateTime? get lastReleaseAt => _lastReleaseAt;
+
+  @override
+  IntakeReason? get lastReleaseReason => _lastReleaseReason;
+
+  @override
+  int? get lastReleaseQuota => _lastReleaseQuota;
+
+  @override
+  Future<void> markReleased(
+    DateTime now,
+    IntakeReason reason,
+    int quota,
+  ) async {
+    _lastReleaseAt = now;
+    _lastReleaseReason = reason;
+    _lastReleaseQuota = quota;
+    await _db.writeSetting(_keyLastReleaseAt, now.toIso8601String());
+    // The enum name, not its index: reordering `IntakeReason` would silently
+    // turn a stored `heldByForecast` into something else.
+    await _db.writeSetting(_keyLastReleaseReason, reason.name);
+    await _db.writeSetting(_keyLastReleaseQuota, quota);
   }
 }

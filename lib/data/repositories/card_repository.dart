@@ -15,7 +15,7 @@ import '../database/app_database.dart';
 /// It exposes a [Stream], never a `ValueNotifier`: that type comes from
 /// `package:flutter/foundation.dart` and would drag Flutter into `data/`.
 /// Turning the stream into a notifier is the ViewModel's job.
-final class CardRepository implements CollectionView {
+final class CardRepository implements CollectionView, CardWriter {
   CardRepository(this._db);
 
   final AppDatabase _db;
@@ -54,6 +54,7 @@ final class CardRepository implements CollectionView {
     _emit();
   }
 
+  @override
   Future<void> saveAll(Iterable<Card> cards) async {
     for (final card in cards) {
       _cards[card.id] = card;

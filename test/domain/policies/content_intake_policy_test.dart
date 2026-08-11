@@ -142,4 +142,61 @@ void main() {
       expect(built.policy.shouldWarnBeforeImport(), isFalse);
     });
   });
+
+  group('releasing once a day', () {
+    test('the batch goes out once a day, however many times it is asked for',
+        () {
+      final built = build();
+
+      final first = built.policy.releaseToday(firstOpening);
+      expect(first.cards, hasLength(20));
+
+      // Same day, asked again: the ramp would collapse if this freed 16 more.
+      final second = built.policy.releaseToday(
+        firstOpening.add(const Duration(hours: 3)),
+        lastReleasedOn: firstOpening,
+      );
+
+      expect(second.cards, isEmpty);
+      expect(second.reason, IntakeReason.alreadyReleasedToday);
+      expect(second.shouldWarn, isFalse,
+          reason: 'normal operation, not a batch held back');
+    });
+
+    test('an empty collection does not settle the day, a held batch does', () {
+      // A fresh install answers `nothingPending`. Treating that as the day's
+      // decision would hold everything imported minutes later until tomorrow.
+      final empty = build(pending: 0).policy.releaseToday(firstOpening);
+      expect(empty.reason, IntakeReason.nothingPending);
+      expect(empty.decidesTheDay, isFalse);
+
+      final released = build().policy.releaseToday(firstOpening);
+      expect(released.decidesTheDay, isTrue);
+    });
+
+    test('the policy stamps introducedAt, so no caller has to', () {
+      final release = build().policy.releaseToday(firstOpening);
+
+      expect(release.cards.every((card) => card.introducedAt == firstOpening),
+          isTrue);
+      expect(release.cards.every((card) => card.isReleased), isTrue);
+    });
+
+    test('a new day releases the next batch', () {
+      final built = build();
+      final dayTwo = firstOpening.add(const Duration(days: 1));
+
+      // The first day's batch has to be persisted, or day two sees all 100
+      // still pending and hands out the same cards again.
+      for (final card in built.policy.releaseToday(firstOpening).cards) {
+        built.collection.save(card);
+      }
+      final next =
+          built.policy.releaseToday(dayTwo, lastReleasedOn: firstOpening);
+
+      expect(next.cards, hasLength(20));
+      expect(next.reason, IntakeReason.initialLoad);
+      expect(next.cards.map((card) => card.id), isNot(contains('p0')));
+    });
+  });
 }
