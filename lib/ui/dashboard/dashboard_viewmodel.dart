@@ -2,7 +2,7 @@ import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 
 import '../../core/clock.dart';
-import '../../data/repositories/card_repository.dart';
+import '../../core/daily_release.dart';
 import '../../data/repositories/review_log_repository.dart';
 import '../../data/repositories/session_repository.dart';
 import '../../data/repositories/settings_repository.dart';
@@ -25,11 +25,10 @@ class DashboardViewModel {
     this._stats,
     this._calibration,
     this._dueCards,
-    this._intake,
+    this._release,
     this._ceiling,
     this._optimizer,
     this._fsrs,
-    this._cards,
     this._logs,
     this._sessions,
     this._settings,
@@ -39,11 +38,10 @@ class DashboardViewModel {
   final ProgressStats _stats;
   final Calibration _calibration;
   final DueCardsPolicy _dueCards;
-  final ContentIntakePolicy _intake;
+  final DailyRelease _release;
   final MovingCeiling _ceiling;
   final FsrsOptimizer _optimizer;
   final FsrsGateway _fsrs;
-  final CardRepository _cards;
   final ReviewLogRepository _logs;
   final SessionRepository _sessions;
   final SettingsRepository _settings;
@@ -54,19 +52,16 @@ class DashboardViewModel {
   /// Message of the last tuning attempt, kept between reloads.
   String? _tuningMessage;
 
-  /// Opening the dashboard is what releases the day's batch (H16): importing
-  /// is not releasing, and the policy is the only class allowed to stamp
-  /// `introducedAt`.
+  /// The dashboard no longer releases anything — `DailyRelease` did it at
+  /// startup, and on every resume. It reads the day's outcome, so the intake
+  /// notice still explains a batch that was held or reduced.
   Future<void> load() async {
     try {
-      final now = _clock.now();
-      final release = _intake.releaseToday(now);
-      if (release.cards.isNotEmpty) {
-        await _cards.saveAll([
-          for (final card in release.cards) card.copyWith(introducedAt: now),
-        ]);
-      }
-      await _publish(release);
+      // Covers the PWA reopened on a new day: the resume listener may not have
+      // fired yet, and `run()` is idempotent once today's batch has gone out.
+      // It returns the day's real reason — including a held or reduced batch —
+      // so the notice survives every reopening of the dashboard.
+      await _publish(await _release.run());
     } on Object catch (error) {
       state.value = DashboardState.error('Não foi possível abrir o painel: $error');
     }

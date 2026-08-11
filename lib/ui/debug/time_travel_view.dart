@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/clock.dart';
+import '../../core/daily_release.dart';
 import '../../core/di/service_locator.dart';
 import '../../data/database/web_database_factory.dart';
 import '../../data/repositories/card_repository.dart';
@@ -44,6 +45,10 @@ class _TimeTravelViewState extends State<TimeTravelView> {
       databaseName: debugDatabaseName,
       clock: clock,
     );
+    // `resetLocator` rebuilds the whole graph, so the batch the real app
+    // released at startup is gone with it. Without this, travelling in time
+    // would audit a frozen collection.
+    await getIt<DailyRelease>().run();
     if (!mounted) return;
     setState(() {
       _clock = clock;
@@ -55,6 +60,7 @@ class _TimeTravelViewState extends State<TimeTravelView> {
   Future<void> _leaveDebugMode() async {
     setState(() => _busy = true);
     await resetLocator(factory: webDatabaseFactory);
+    await getIt<DailyRelease>().run();
     if (!mounted) return;
     setState(() {
       _clock = null;
@@ -65,6 +71,12 @@ class _TimeTravelViewState extends State<TimeTravelView> {
 
   Future<void> _advance(Duration by) async {
     _clock?.advance(by);
+    // Moving the clock into a new day has to release that day's batch, which
+    // is the whole point of the tool: without it, the ceiling would be audited
+    // against a collection that stopped growing on the day debug mode opened.
+    // `run()` is idempotent per day, so advancing by hours costs nothing.
+    await getIt<DailyRelease>().run();
+    if (!mounted) return;
     setState(() => _message = null);
   }
 

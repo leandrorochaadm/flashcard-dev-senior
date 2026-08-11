@@ -1,4 +1,5 @@
 import 'package:flashcard_dev_senior/core/clock.dart';
+import 'package:flashcard_dev_senior/core/daily_release.dart';
 import 'package:flashcard_dev_senior/core/di/service_locator.dart';
 import 'package:flashcard_dev_senior/data/repositories/card_repository.dart';
 import 'package:flashcard_dev_senior/data/repositories/review_log_repository.dart';
@@ -85,9 +86,9 @@ Resposta $i.
     final release = getIt<ContentIntakePolicy>().releaseToday(firstOpening);
     expect(release.reason, IntakeReason.initialLoad);
     expect(release.quota, 20);
-    await getIt<CardRepository>().saveAll(
-      [for (final card in release.cards) card.copyWith(introducedAt: firstOpening)],
-    );
+    // No stamping here: `ContentIntakePolicy` is the only class that writes
+    // `introducedAt`, and it hands the batch back already released.
+    await getIt<CardRepository>().saveAll(release.cards);
 
     final due = getIt<DueCardsPolicy>().dueNow(firstOpening);
     expect(due.length, 20);
@@ -102,5 +103,81 @@ Resposta $i.
       5,
       reason: 'the subject map builds itself from whatever was imported',
     );
+  });
+
+  group('the daily release, through the real graph', () {
+    Future<void> import(int count) async {
+      final source = [
+        for (var i = 1; i <= count; i++)
+          '''
+---
+id: est-${i.toString().padLeft(3, '0')}
+assunto: Assunto ${i % 5}
+dificuldade: intermediário
+
+**Pergunta**
+Pergunta $i?
+
+**Resposta**
+Resposta $i.
+''',
+      ].join();
+      final outcome = getIt<ImportService>()
+          .resolve(getIt<MarkdownParser>().parse(source), getIt<Clock>().now());
+      await getIt<CardRepository>().saveAll(outcome.created);
+    }
+
+    // The bug this whole change exists for: the user imported, went straight
+    // to the study tab, and "Começar" landed on "Fim do round" without ever
+    // showing a card — because only `DashboardView.initState` released a
+    // batch, and every study query filters on `isReleased`.
+    test('importing and studying works without ever opening the dashboard',
+        () async {
+      await import(100);
+
+      expect(getIt<DueCardsPolicy>().isDayCleared(firstOpening), isTrue,
+          reason: 'nothing is studiable while the batch is still held');
+
+      await getIt<DailyRelease>().run();
+
+      final subjects = getIt<DueCardsPolicy>().studiableSubjects(firstOpening);
+      expect(subjects, isNotEmpty, reason: 'the subject picker has entries');
+      expect(
+        getIt<DueCardsPolicy>().nextDueCard(firstOpening, subjects.first.subject),
+        isNotNull,
+        reason: 'pressing Começar serves a real question',
+      );
+      expect(getIt<DueCardsPolicy>().dueNow(firstOpening), hasLength(20));
+    });
+
+    test('a fresh install releases nothing, and does not lock the day', () async {
+      // `nothingPending` must not settle the day: importing minutes later has
+      // to release the batch, not wait until tomorrow.
+      final empty = await getIt<DailyRelease>().run();
+      expect(empty.reason, IntakeReason.nothingPending);
+      expect(getIt<SettingsRepository>().lastReleaseAt, isNull);
+
+      await import(100);
+      await getIt<DailyRelease>().run();
+
+      expect(getIt<DueCardsPolicy>().dueNow(firstOpening), hasLength(20));
+    });
+
+    test('opening the app five times over releases exactly one batch', () async {
+      await import(100);
+      for (var i = 0; i < 5; i++) {
+        await getIt<DailyRelease>().run();
+      }
+
+      // Before the fix each visit to the dashboard freed another ceil(n/5):
+      // 20, then 16, then 13 — six visits and the five-day ramp was gone.
+      expect(
+        getIt<CardRepository>().all.where((card) => card.isReleased),
+        hasLength(20),
+      );
+      expect(getIt<SettingsRepository>().lastReleaseAt, firstOpening);
+      expect(getIt<SettingsRepository>().lastReleaseReason,
+          IntakeReason.initialLoad);
+    });
   });
 }

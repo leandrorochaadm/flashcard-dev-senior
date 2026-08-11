@@ -43,7 +43,6 @@ class _DashboardViewState extends State<DashboardView> {
       getIt(),
       getIt(),
       getIt(),
-      getIt(),
     );
     _load();
   }

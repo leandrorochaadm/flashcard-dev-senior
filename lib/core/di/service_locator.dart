@@ -27,6 +27,7 @@ import '../../domain/scheduling/optimizer/fsrs_optimizer.dart';
 import '../../domain/stats/calibration.dart';
 import '../../domain/stats/progress_stats.dart';
 import '../clock.dart';
+import '../daily_release.dart';
 
 final getIt = GetIt.instance;
 
@@ -77,6 +78,14 @@ Future<void> setupLocator({
     ..registerLazySingleton<ContentIntakePolicy>(
       () => ContentIntakePolicy(getIt(), getIt(), getIt(), getIt()),
     )
+    ..registerLazySingleton<DailyRelease>(
+      () => DailyRelease(
+        getIt<ContentIntakePolicy>(),
+        getIt<CardRepository>(),
+        getIt<SettingsRepository>(),
+        getIt<Clock>(),
+      ),
+    )
     ..registerLazySingleton<MockInterviewService>(
       () => MockInterviewService(getIt()),
     )
@@ -87,6 +96,12 @@ Future<void> setupLocator({
       () => ProgressStats(getIt(), getIt(), getIt()),
     )
     ..registerLazySingleton<FsrsOptimizer>(() => FsrsOptimizer(getIt()));
+
+  // Brings back today's outcome if the batch already went out — a reload, and
+  // the service worker performs one on its own when a new build activates.
+  // Reads settings only; it releases nothing, so `app_wiring_test` still
+  // proves that importing is not releasing.
+  getIt<DailyRelease>().restoreFromSettings(clock.now());
 }
 
 /// Used by the time-travel screen: it swaps the clock and points the whole
