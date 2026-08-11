@@ -46,3 +46,7 @@ app.*.map.json
 
 # Documentos de trabalho e wireframes — fora do controle de versão
 temp/
+
+# Código gerado (freezed / json_serializable) — regerado com build_runner
+*.freezed.dart
+*.g.dart
