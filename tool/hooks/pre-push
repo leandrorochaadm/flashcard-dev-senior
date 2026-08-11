@@ -1,7 +1,12 @@
 #!/bin/sh
 # Bumps the build number, regenerates freezed/json_serializable code and runs
-# `flutter analyze` before every push. CI no longer runs analyze — this is the
-# single gate for it, to keep GitHub Actions time down.
+# `flutter analyze` plus the VM test suite before every push. CI no longer runs
+# analyze — this is the single gate for it, to keep GitHub Actions time down.
+#
+# The bump touches two files, not one: `version:` in pubspec.yaml and the
+# BUILD_NUMBER fallback in lib/core/app_version.dart. They are asserted equal by
+# `app_version_test.dart`, so bumping only the first turns CI red on every push
+# — which is exactly what happened on build 2.
 #
 # HOW THE BUMP RIDES ALONG WITH THE PUSH
 #
@@ -53,7 +58,44 @@ if [ "$LOCAL_BUILD" -le "$REMOTE_BUILD" ]; then
   sed "s/^version:.*/version: $APP_VERSION+$NEXT/" pubspec.yaml > pubspec.yaml.tmp
   mv pubspec.yaml.tmp pubspec.yaml
 
-  git add pubspec.yaml
+  # The fallback in app_version.dart has to follow, or every push turns CI red:
+  # `app_version_test.dart` asserts the two agree, and it is right to — the
+  # About screen names the running bundle even under `flutter run`, where no
+  # --dart-define is passed and only this default answers.
+  # awk, not sed: the replacement has to be the `defaultValue` that belongs to
+  # BUILD_NUMBER, not the one under APP_VERSION a few lines above. Anchoring on
+  # the environment key makes that explicit instead of relying on '1.0.0' not
+  # happening to match a digits-only pattern.
+  awk -v next_build="$NEXT" '
+    /BUILD_NUMBER/ { seen = 1 }
+    seen && /defaultValue:/ {
+      sub(/defaultValue: .*/, "defaultValue: \x27" next_build "\x27,")
+      seen = 0
+    }
+    { print }
+  ' lib/core/app_version.dart > app_version.dart.tmp
+  mv app_version.dart.tmp lib/core/app_version.dart
+
+  if ! grep -q "defaultValue: '$NEXT'," lib/core/app_version.dart; then
+    echo "pre-push: could not bump the fallback in lib/core/app_version.dart." >&2
+    echo "Its shape changed; fix the sed above before pushing." >&2
+    exit 1
+  fi
+
+  # Only now, with the bump written, do the tests mean anything: running them
+  # before it would pass on a version pair the push is about to break — exactly
+  # the failure that shipped in build 2. The commit comes after, so a red suite
+  # leaves no orphan bump commit behind, only the two edited files, which the
+  # message below tells you how to drop.
+  if ! flutter test --exclude-tags=chrome-only; then
+    echo "" >&2
+    echo "pre-push: tests failed, nothing was committed or pushed." >&2
+    echo "The build bump is still in your working tree; to drop it:" >&2
+    echo "  git checkout pubspec.yaml lib/core/app_version.dart" >&2
+    exit 1
+  fi
+
+  git add pubspec.yaml lib/core/app_version.dart
   git commit -m "chore: bump build number to $NEXT"
 
   echo ""
