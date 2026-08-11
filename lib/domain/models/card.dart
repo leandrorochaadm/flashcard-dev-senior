@@ -62,6 +62,19 @@ sealed class Card with _$Card {
   /// Imported but still held back by the ContentIntakePolicy.
   bool get isReleased => introducedAt != null;
 
+  /// The interval that actually elapsed since the previous review, in decimal
+  /// days — what `ReviewLog.elapsedDays` records and what the calibration
+  /// recomputes retention from. Date arithmetic belongs here, not in a
+  /// ViewModel.
+  ///
+  /// TODO(pontos em aberto): the requirements do not say what to record for a
+  /// card answered for the first time; 0 is used until the client decides.
+  double observedIntervalDays(DateTime now) {
+    final last = lastReviewedAt;
+    if (last == null) return 0;
+    return now.difference(last).inMinutes / Duration.minutesPerDay;
+  }
+
   bool isDueOn(DateTime now) => dueAt != null && !dueAt!.isAfter(now);
 
   MemoryState get memory => MemoryState(

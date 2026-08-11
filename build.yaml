@@ -1,0 +1,9 @@
+targets:
+  $default:
+    builders:
+      json_serializable:
+        options:
+          # Without it, the nested RoundScore list of a StudySession is written
+          # as objects and never reads back — an interrupted session would be
+          # lost, which is exactly what the sessions store exists to prevent.
+          explicit_to_json: true
