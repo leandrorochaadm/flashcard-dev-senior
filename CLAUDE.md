@@ -209,6 +209,52 @@ Sem `dart:io`, sem `dart:ffi`, **sem `dart:isolate`** — `Isolate.run` lança
 fatias na thread principal, cedendo o frame com `await Future.delayed(Duration.zero)`
 entre épocas. Nenhum plugin com código nativo, nenhum `sqflite`.
 
+## PWA: offline e atualização
+
+**O service worker do Flutter está desligado.** Desde a 3.44 o
+`flutter_service_worker.js` gerado se autodestrói — chama `skipWaiting()` no
+install e `registration.unregister()` no activate — e não guarda nada em cache;
+o próprio bundle o rotula "deprecated and will be removed in a future Flutter
+release". Por isso `tool/build_web.sh` passa **`--pwa-strategy=none`** e o
+`web/sw.js` assume, registrado pelo `index.html`.
+
+`web/sw.js` serve navegação por rede-primeiro com queda para o `index.html` do
+cache, e o resto por cache-primeiro. O nome do cache carrega o build
+(`flashcards-1.0.0+7.abc1234`, carimbado pelo `build_web.sh`), então um build
+novo abre um cache novo e apaga o anterior inteiro — nunca um `main.dart.js`
+novo contra um manifesto de assets velho.
+
+**Duas armadilhas, ambas descobertas testando no navegador de verdade:**
+
+- **`register()` não verifica se o script mudou.** O navegador só rebusca o
+  `sw.js` conforme o cache HTTP; num teste com servidor sem `Cache-Control`, o
+  app ficou preso no build antigo mesmo com o servidor já publicando o novo.
+  Por isso, ao ver o `version.json` mudar, o `index.html` chama
+  **`registration.update()` explicitamente**. Sem essa linha, a atualização não
+  acontece.
+- **O reload não pode ser disparado pela detecção da versão.** Recarregar antes
+  de o worker novo ativar serve um `index.html` novo com os assets do cache
+  antigo. Quem manda recarregar é o próprio worker: no `activate`, depois de
+  limpar os caches, ele faz `postMessage({type:'activated'})` para as páginas
+  abertas. Só então o `index.html` marca o reload — e o executa **quando a
+  página fica oculta**, para não arrancar o cartão da frente de quem estuda.
+
+`web/_headers` marca `no-cache` em **tudo** (`/*`), não só nos entry points: o
+Flutter web **não gera nome com hash**, então `main.dart.js`, `AssetManifest.bin`
+e `MaterialIcons-Regular.otf` mudam de conteúdo mantendo o nome, e marcá-los
+`immutable` prenderia uma fonte velha sem forma de despejar. O Cloudflare
+Workers serve `_headers` a partir do `[assets]` do `wrangler.toml`.
+
+**Como testar sem confiar em impressão.** `Network.emulateNetworkConditions` do
+DevTools **não alcança o service worker** — ele tem contexto de rede próprio, e
+requisições same-origin continuam saindo. O único teste honesto é **derrubar o
+servidor** e recarregar. Use um perfil de navegador limpo: caches, service
+workers e abas antigas de execuções anteriores contaminam o resultado, e uma
+aba esquecida segue consultando o `version.json` e recriando caches.
+
+O build number vem do `pubspec.yaml`, incrementado pelo hook de `pre-push`
+(`tool/hooks/`), e é o que avisa um PWA suspenso de que existe versão nova.
+
 ## O núcleo: agendamento
 
 A ordem das 5 operações é **normativa** e o passo 5 não pode ser movido —
