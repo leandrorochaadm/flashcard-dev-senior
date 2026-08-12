@@ -11,6 +11,7 @@ import '../../data/repositories/card_repository.dart';
 import '../../data/repositories/review_log_repository.dart';
 import '../../data/repositories/session_repository.dart';
 import '../../data/repositories/settings_repository.dart';
+import '../../domain/import/dart_code_formatter.dart';
 import '../../domain/import/import_service.dart';
 import '../../domain/import/markdown_parser.dart';
 import '../../domain/mock_interview/mock_interview_service.dart';
@@ -89,7 +90,12 @@ Future<void> setupLocator({
     ..registerLazySingleton<MockInterviewService>(
       () => MockInterviewService(getIt()),
     )
-    ..registerLazySingleton<MarkdownParser>(MarkdownParser.new)
+    // With the formatter: the app tidies and checks the ```dart blocks of an
+    // imported answer. Tests build a bare MarkdownParser when they need the
+    // answer back byte for byte.
+    ..registerLazySingleton<MarkdownParser>(
+      () => MarkdownParser(DartCodeFormatter()),
+    )
     ..registerLazySingleton<ImportService>(() => ImportService(getIt(), getIt()))
     ..registerLazySingleton<Calibration>(Calibration.new)
     ..registerLazySingleton<ProgressStats>(

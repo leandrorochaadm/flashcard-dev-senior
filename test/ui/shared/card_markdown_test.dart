@@ -1,3 +1,6 @@
+import 'package:flashcard_dev_senior/domain/import/import_preview.dart';
+import 'package:flashcard_dev_senior/domain/import/import_template.dart';
+import 'package:flashcard_dev_senior/domain/import/markdown_parser.dart';
 import 'package:flashcard_dev_senior/ui/shared/code_block.dart';
 import 'package:flashcard_dev_senior/ui/shared/card_markdown.dart';
 import 'package:flutter/material.dart';
@@ -204,5 +207,108 @@ void main() {
     await render(tester, 'uma resposta sem marcacao nenhuma');
 
     expect(find.text('uma resposta sem marcacao nenhuma'), findsOneWidget);
+  });
+
+  // The gap is what groups a label with its text. Uniform spacing would leave
+  // every heading floating between two sections, belonging to neither.
+  group('spacing between blocks', () {
+    /// The vertical gap the renderer left between the two runs of text.
+    double gapBetween(WidgetTester tester, String above, String below) =>
+        tester.getTopLeft(find.textContaining(below)).dy -
+        tester.getBottomLeft(find.textContaining(above)).dy;
+
+    testWidgets('two paragraphs get the ordinary gap', (tester) async {
+      await render(tester, 'primeiro\n\nsegundo');
+
+      expect(gapBetween(tester, 'primeiro', 'segundo'), 12);
+    });
+
+    testWidgets('a heading takes more air above than it leaves below', (
+      tester,
+    ) async {
+      await render(tester, 'antes\n\n##### Rotulo\n\ndepois');
+
+      final above = gapBetween(tester, 'antes', 'Rotulo');
+      final below = gapBetween(tester, 'Rotulo', 'depois');
+      expect(above, greaterThan(below));
+      expect(below, lessThan(12));
+    });
+
+    testWidgets('the first block is flush with the top, with no gap', (
+      tester,
+    ) async {
+      await render(tester, 'primeiro\n\nsegundo');
+
+      final top = tester.getTopLeft(find.byType(CardMarkdown)).dy;
+      expect(tester.getTopLeft(find.textContaining('primeiro')).dy, top);
+    });
+
+    testWidgets('a heading opening the answer still starts flush', (
+      tester,
+    ) async {
+      await render(tester, '##### Rotulo\n\ntexto');
+
+      final top = tester.getTopLeft(find.byType(CardMarkdown)).dy;
+      expect(tester.getTopLeft(find.text('Rotulo')).dy, top);
+    });
+
+    testWidgets('a code block right after a label hugs it too', (tester) async {
+      await render(tester, '##### Código\n\n```dart\nvar x = 1;\n```');
+
+      final gap = tester.getTopLeft(find.byType(CodeBlock)).dy -
+          tester.getBottomLeft(find.text('Código')).dy;
+      expect(gap, lessThan(12));
+    });
+  });
+
+  // The template is what the AI is told to imitate, so whatever it demonstrates
+  // is what every future card looks like on screen. These check the
+  // demonstration itself, instead of trusting that it reads well.
+  group('the copy template renders', () {
+    ParsedCard exampleWithCode() =>
+        const MarkdownParser().parse(importTemplate).valid.last;
+
+    testWidgets('every section label comes out as a heading of its own', (
+      tester,
+    ) async {
+      await render(tester, exampleWithCode().answer);
+
+      for (final label in ['Por quê', 'Alternativa', 'Uso real', 'Código']) {
+        expect(styleOf(tester, label).fontWeight, FontWeight.w700,
+            reason: 'the label "$label"');
+      }
+    });
+
+    testWidgets('a label hugs its own text and keeps away from the one above', (
+      tester,
+    ) async {
+      await render(tester, exampleWithCode().answer);
+
+      // What the eye uses to group a label with what it labels: the space
+      // above a heading has to beat the space below it. A uniform gap would
+      // leave every label floating between two sections, part of neither.
+      final label = find.text('Alternativa');
+      final above = find.textContaining('já implementa a lista de ouvintes');
+      final own = find.textContaining('entrega o mesmo comportamento');
+
+      final gapAbove =
+          tester.getTopLeft(label).dy - tester.getBottomLeft(above).dy;
+      final gapBelow =
+          tester.getTopLeft(own).dy - tester.getBottomLeft(label).dy;
+      expect(gapAbove, greaterThan(gapBelow * 2));
+    });
+
+    testWidgets('the dart section becomes a code block, not a paragraph', (
+      tester,
+    ) async {
+      await render(tester, exampleWithCode().answer);
+
+      final block = tester.widget<CodeBlock>(find.byType(CodeBlock));
+      expect(block.language, 'dart');
+      expect(block.code, contains('notifyListeners();'));
+      // No rule anywhere: the template teaches `***` but never uses it, and a
+      // `---` would have been eaten by the import parser long before here.
+      expect(find.byType(Divider), findsNothing);
+    });
   });
 }

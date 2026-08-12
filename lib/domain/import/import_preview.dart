@@ -34,6 +34,12 @@ enum ImportIssue {
   unknownDifficulty,
   missingQuestion,
   missingAnswer,
+
+  /// A ```dart block that does not parse in any shape. Syntax only: a snippet
+  /// with a misspelled method name is not caught, and cannot be — see
+  /// [DartCodeFormatter]. Marked instead of imported so the card is fixed at
+  /// the door, not read wrong for the next 30 days.
+  unparsableDartCode,
 }
 
 final class InvalidBlock {

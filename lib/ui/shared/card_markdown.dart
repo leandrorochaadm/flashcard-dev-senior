@@ -23,13 +23,27 @@ class CardMarkdown extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        for (final block in blocks) ...[
-          _BlockView(block: block, style: style),
-          const SizedBox(height: 12),
+        for (var i = 0; i < blocks.length; i++) ...[
+          SizedBox(height: _gapBefore(blocks, i)),
+          _BlockView(block: blocks[i], style: style),
         ],
       ],
     );
   }
+}
+
+/// The space above block [index], from its relation to the one before it.
+///
+/// A uniform gap would leave a heading floating equidistant between its own
+/// paragraph and the section above — the label would read as belonging to
+/// neither. The answer of a card is written in labeled sections, so grouping
+/// the label with what it labels is what makes the answer scannable: more air
+/// BEFORE a heading, almost none after it.
+double _gapBefore(List<_Block> blocks, int index) {
+  if (index == 0) return 0;
+  if (blocks[index].kind == _BlockKind.heading) return 22;
+  if (blocks[index - 1].kind == _BlockKind.heading) return 4;
+  return 12;
 }
 
 // ---------------------------------------------------------------- block model

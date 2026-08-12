@@ -55,6 +55,30 @@ void main() {
     expect(await getIt<SessionRepository>().unfinished(), isNull);
   });
 
+  // The formatter protects nothing unless the app actually injects it, and a
+  // bare `MarkdownParser` is a perfectly valid object that silently skips the
+  // check. Asserting behaviour, not the field: only a wired parser tidies.
+  test('the parser the app resolves carries the dart formatter', () {
+    const source = '''
+---
+id: est-001
+assunto: Estado
+dificuldade: básico
+
+**Pergunta**
+E o código?
+
+**Resposta**
+```dart
+var   x=1;
+```
+''';
+
+    final answer = getIt<MarkdownParser>().parse(source).valid.single.answer;
+
+    expect(answer, contains('var x = 1;'));
+  });
+
   test('import, release and answer: a full first day through the real graph',
       () async {
     final parser = getIt<MarkdownParser>();

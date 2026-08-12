@@ -1,14 +1,25 @@
+@TestOn('vm')
+library;
+
+// The mirror image of the `chrome-only` suites: this one reads the deck from
+// disk, so it belongs to the VM and must not be loaded by the Chrome job —
+// `--tags=chrome-only` filters which tests RUN, not which files are compiled.
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flashcard_dev_senior/domain/import/dart_code_formatter.dart';
 import 'package:flashcard_dev_senior/domain/import/markdown_parser.dart';
 
 /// Parses every deck file in `temp/card/` with the production parser.
 ///
 /// Regex checks pass on files the app would reject, so the only honest
 /// verification is the parser that runs on import.
+///
+/// The formatter is wired in for the same reason: the app imports with it, so
+/// checking without it would bless a deck the app then marks. It is what makes
+/// a ```dart block with broken syntax fail here, before the card is studied.
 void main() {
-  const parser = MarkdownParser();
+  final parser = MarkdownParser(DartCodeFormatter());
   final deckDir = Directory('temp/card');
   // `temp/` is gitignored, so a clean clone has no deck to check.
   if (!deckDir.existsSync()) {

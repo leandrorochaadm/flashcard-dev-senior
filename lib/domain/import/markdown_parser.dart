@@ -1,4 +1,5 @@
 import '../models/enums.dart';
+import 'dart_code_formatter.dart';
 import 'import_preview.dart';
 
 /// Reads the labeled-Markdown format described in the requirements.
@@ -7,7 +8,12 @@ import 'import_preview.dart';
 /// independently on purpose: a broken block number 47 shows up marked in the
 /// preview while the other 99 import normally.
 final class MarkdownParser {
-  const MarkdownParser();
+  /// Without a [formatter] the answer comes back byte for byte, which is the
+  /// contract every test of this class relies on. The app injects one, so the
+  /// ```dart blocks are tidied — and marked when broken — at the door.
+  const MarkdownParser([this._formatter]);
+
+  final DartCodeFormatter? _formatter;
 
   static const _questionMarker = 'pergunta';
   static const _answerMarker = 'resposta';
@@ -121,12 +127,25 @@ final class MarkdownParser {
     if (difficulty == null) issues.add(ImportIssue.unknownDifficulty);
     if (_join(question).isEmpty) issues.add(ImportIssue.missingQuestion);
     if (_join(answer).isEmpty) issues.add(ImportIssue.missingAnswer);
+
+    // Runs after the cheap checks so a block already headed for the invalid
+    // list is not formatted for nothing. The QUESTION goes through it too:
+    // "what does this code do?" is a card whose only code is on the front.
+    // The question is CHECKED but never rewritten. `ImportService` matches an
+    // existing card by the question text when the file omits the `id:`, so
+    // reformatting it would change the matching key and silently cost the
+    // study history of every card imported before this check existed.
+    final formatted = _formatter?.formatFences(_join(answer));
+    final questionOk = _formatter?.formatFences(_join(question)).ok ?? true;
+    if (!questionOk || (formatted != null && !formatted.ok)) {
+      issues.add(ImportIssue.unparsableDartCode);
+    }
     if (issues.isNotEmpty) return null;
 
     return ParsedCard(
       id: (id == null || id.isEmpty) ? null : id,
       question: _join(question),
-      answer: _join(answer),
+      answer: formatted?.answer ?? _join(answer),
       subject: subject!,
       difficulty: difficulty!,
       blockIndex: index,

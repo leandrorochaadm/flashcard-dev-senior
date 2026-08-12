@@ -170,4 +170,48 @@ Um roda em Dart puro, o outro monta a árvore de widgets.
     expect(preview.valid.map((card) => card.id), ['est-001', 'est-002']);
     expect(preview.valid.last.answer, contains('```dart'));
   });
+
+  test('the copy template shows the five answer sections it asks for', () {
+    final preview = parser.parse(importTemplate);
+
+    // The first section carries no label: the answer opens with the answer.
+    // And the first example has no code on purpose — the template says to skip
+    // that section rather than invent a snippet.
+    for (final answer in [
+      preview.valid.first.answer,
+      preview.valid.last.answer,
+    ]) {
+      expect(answer.trimLeft(), isNot(startsWith('#')));
+      expect(
+        answer,
+        stringContainsInOrder(
+            ['##### Por quê', '##### Alternativa', '##### Uso real']),
+      );
+    }
+    expect(preview.valid.first.answer, isNot(contains('##### Código')));
+    expect(preview.valid.last.answer, contains('##### Código'));
+  });
+
+  test('the copy template never puts a --- rule inside an answer', () {
+    // A line of three dashes is the card separator: an answer using it as a
+    // horizontal rule would be cut into two cards on import. The template
+    // teaches `***` instead, so the examples must not contradict it.
+    for (final card in parser.parse(importTemplate).valid) {
+      for (final line in card.answer.split('\n')) {
+        expect(line.trim(), isNot('---'), reason: 'in card ${card.id}');
+      }
+    }
+    expect(importTemplate, contains('***'));
+  });
+
+  test('the copy template teaches no escapes and no tables', () {
+    // Both are real limits of the hand-rolled renderer: `\*` reaches the
+    // screen literally and a table renders as raw text.
+    expect(importTemplate, contains('NÃO use escape de Markdown'));
+    expect(importTemplate, contains('NÃO use tabelas'));
+    for (final card in parser.parse(importTemplate).valid) {
+      expect(card.answer, isNot(contains(r'\*')));
+      expect(card.answer, isNot(contains('|---')));
+    }
+  });
 }

@@ -130,4 +130,7 @@ String issueLabel(ImportIssue issue) => switch (issue) {
       ImportIssue.unknownDifficulty => 'dificuldade não reconhecida',
       ImportIssue.missingQuestion => 'sem pergunta',
       ImportIssue.missingAnswer => 'sem resposta',
+      // Syntax, not compilation: the formatter parses, it does not resolve
+      // names. Saying "não compila" would promise a check the app cannot do.
+      ImportIssue.unparsableDartCode => 'erro de sintaxe no código Dart',
     };
