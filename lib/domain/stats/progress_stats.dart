@@ -114,8 +114,8 @@ final class ProgressStats {
     ];
   }
 
-  /// Times over the 60-second ceiling were already dropped when the log was
-  /// written, so `timeOnCard == null` simply does not enter here.
+  /// Times over `TimeOnCardPolicy.ceiling` were already dropped when the log
+  /// was written, so `timeOnCard == null` simply does not enter here.
   TimeOnCardStats timeOnCard(List<ReviewLog> logs) {
     final subjectOf = {for (final card in _collection.all) card.id: card.subject};
     final all = <Duration>[];

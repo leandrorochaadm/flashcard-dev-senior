@@ -20,7 +20,7 @@ import 'session_state.dart';
 
 /// Sequences the study screen. It decides nothing about scheduling: the
 /// scheduler places the card, the policies own the round, the ceiling and the
-/// 60-second cut. What lives here is the 1-second `Timer`, the notifiers and
+/// time-on-card cut. What lives here is the 1-second `Timer`, the notifiers and
 /// the translation of domain results into [SessionState].
 class SessionViewModel {
   SessionViewModel(

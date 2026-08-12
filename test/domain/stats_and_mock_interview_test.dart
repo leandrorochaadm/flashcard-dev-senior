@@ -239,7 +239,7 @@ void main() {
       final logs = [
         log('a', now, timeOnCard: const Duration(seconds: 20)),
         log('a', now, timeOnCard: const Duration(seconds: 40)),
-        log('a', now), // dropped by the 60s ceiling
+        log('a', now), // dropped by TimeOnCardPolicy.ceiling
       ];
 
       final times = stats.timeOnCard(logs);

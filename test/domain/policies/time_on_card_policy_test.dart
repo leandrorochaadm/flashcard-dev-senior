@@ -21,11 +21,30 @@ void main() {
       expect(policy.isOverCeiling(const Duration(minutes: 5)), isTrue);
     });
 
-    test('exactly 60 seconds is still recorded', () {
+    test('exactly on the ceiling is still recorded', () {
       expect(
-        policy.timeToRecord(const Duration(seconds: 60)),
-        const Duration(seconds: 60),
+        policy.timeToRecord(TimeOnCardPolicy.ceiling),
+        TimeOnCardPolicy.ceiling,
       );
+      expect(policy.isOverCeiling(TimeOnCardPolicy.ceiling), isFalse);
+      expect(
+        policy.timeToRecord(
+          TimeOnCardPolicy.ceiling + const Duration(seconds: 1),
+        ),
+        isNull,
+      );
+    });
+
+    // The reason the ceiling moved on 12/08/2026. A five-section answer runs
+    // a median of 155 words, near 52 s of reading before any thinking; the
+    // old 60 s ceiling threw that card away as distraction and the dashboard
+    // average silently became an average of the short cards.
+    test('a full five-section card still feeds the average', () {
+      expect(
+        policy.timeToRecord(const Duration(seconds: 75)),
+        const Duration(seconds: 75),
+      );
+      expect(policy.isOverCeiling(const Duration(seconds: 75)), isFalse);
     });
   });
 

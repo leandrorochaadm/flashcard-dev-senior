@@ -171,7 +171,7 @@ Dois testes para classificar qualquer lógica nova:
   `state` ou `introducedAt`;
 - qualquer aritmética de `DateTime`/`Duration` que não seja formatação de exibição;
 - qualquer número mágico do domínio: `7` (firme), `4` (cartão-problema), `0.90`
-  (retenção), `60` (teto de segundos), `20`/`100`/`30` (a rampa), `0.8` (aviso);
+  (retenção), `120` (teto de segundos), `20`/`100`/`30` (a rampa), `0.8` (aviso);
 - qualquer ordenação, sorteio ou filtragem de cartões;
 - qualquer `%` ou média que vire indicador do painel.
 
@@ -196,7 +196,7 @@ if (card.stability >= 7) _firmToday.value++;
 
 **Duas regras que parecem de tela e não são.** O `Timer` de 1 s é infraestrutura
 do ViewModel, mas "round dura 5 minutos", "a pausa congela cartão + round +
-sessão" e "acima de 60 s descarta o tempo" são `SessionPolicy` /
+sessão" e "acima do teto descarta o tempo" são `SessionPolicy` /
 `TimeOnCardPolicy`. E a prévia de importação: o parser devolve
 `ImportPreview(valid, invalid)` como dado puro; a View só pinta.
 

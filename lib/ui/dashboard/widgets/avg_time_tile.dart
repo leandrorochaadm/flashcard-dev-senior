@@ -4,8 +4,8 @@ import '../../../domain/stats/progress_stats.dart';
 
 /// Average time on a card, overall and broken down by subject.
 ///
-/// Times over the 60-second ceiling were already dropped by
-/// `TimeOnCardPolicy` when the log was written, so nothing is filtered here.
+/// Times over `TimeOnCardPolicy.ceiling` were already dropped when the log
+/// was written, so nothing is filtered here.
 class AvgTimeTile extends StatelessWidget {
   const AvgTimeTile({required this.stats, super.key});
 
