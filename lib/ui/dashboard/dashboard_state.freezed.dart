@@ -123,11 +123,11 @@ return error(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  loading,TResult Function( int firmedToday,  double? accuracy,  double targetRetention,  List<SubjectProgress> subjects,  StudySession? lastSession,  List<CalibrationPoint> calibration,  List<CalibrationPoint>? previousCalibration,  List<LoadBar> load,  TimeOnCardStats timeOnCard,  Duration ceilingToday,  int daysToTarget,  DateTime targetDate,  int? daysSinceBackup,  bool dayCleared,  bool deadlineReached,  IntakeRelease intake,  bool canRevertTuning,  String? tuningMessage)?  ready,TResult Function( String message)?  error,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  loading,TResult Function( int firmedToday,  CollectionOverview overview,  StudyStreak streak,  List<FirmedDay> firmedSeries,  double firmedAverage,  List<Card> stuckCards,  SubjectProgress? weakestSubject,  NextAction nextAction,  double? accuracy,  double targetRetention,  List<SubjectProgress> subjects,  StudySession? lastSession,  List<CalibrationPoint> calibration,  List<CalibrationPoint>? previousCalibration,  List<LoadBar> load,  double loadAverage,  TimeOnCardStats timeOnCard,  Duration ceilingToday,  int daysToTarget,  DateTime targetDate,  int? daysSinceBackup,  bool dayCleared,  bool deadlineReached,  IntakeRelease intake,  bool canRevertTuning,  String? tuningMessage)?  ready,TResult Function( String message)?  error,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case DashboardLoading() when loading != null:
 return loading();case DashboardReady() when ready != null:
-return ready(_that.firmedToday,_that.accuracy,_that.targetRetention,_that.subjects,_that.lastSession,_that.calibration,_that.previousCalibration,_that.load,_that.timeOnCard,_that.ceilingToday,_that.daysToTarget,_that.targetDate,_that.daysSinceBackup,_that.dayCleared,_that.deadlineReached,_that.intake,_that.canRevertTuning,_that.tuningMessage);case DashboardError() when error != null:
+return ready(_that.firmedToday,_that.overview,_that.streak,_that.firmedSeries,_that.firmedAverage,_that.stuckCards,_that.weakestSubject,_that.nextAction,_that.accuracy,_that.targetRetention,_that.subjects,_that.lastSession,_that.calibration,_that.previousCalibration,_that.load,_that.loadAverage,_that.timeOnCard,_that.ceilingToday,_that.daysToTarget,_that.targetDate,_that.daysSinceBackup,_that.dayCleared,_that.deadlineReached,_that.intake,_that.canRevertTuning,_that.tuningMessage);case DashboardError() when error != null:
 return error(_that.message);case _:
   return orElse();
 
@@ -146,11 +146,11 @@ return error(_that.message);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  loading,required TResult Function( int firmedToday,  double? accuracy,  double targetRetention,  List<SubjectProgress> subjects,  StudySession? lastSession,  List<CalibrationPoint> calibration,  List<CalibrationPoint>? previousCalibration,  List<LoadBar> load,  TimeOnCardStats timeOnCard,  Duration ceilingToday,  int daysToTarget,  DateTime targetDate,  int? daysSinceBackup,  bool dayCleared,  bool deadlineReached,  IntakeRelease intake,  bool canRevertTuning,  String? tuningMessage)  ready,required TResult Function( String message)  error,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  loading,required TResult Function( int firmedToday,  CollectionOverview overview,  StudyStreak streak,  List<FirmedDay> firmedSeries,  double firmedAverage,  List<Card> stuckCards,  SubjectProgress? weakestSubject,  NextAction nextAction,  double? accuracy,  double targetRetention,  List<SubjectProgress> subjects,  StudySession? lastSession,  List<CalibrationPoint> calibration,  List<CalibrationPoint>? previousCalibration,  List<LoadBar> load,  double loadAverage,  TimeOnCardStats timeOnCard,  Duration ceilingToday,  int daysToTarget,  DateTime targetDate,  int? daysSinceBackup,  bool dayCleared,  bool deadlineReached,  IntakeRelease intake,  bool canRevertTuning,  String? tuningMessage)  ready,required TResult Function( String message)  error,}) {final _that = this;
 switch (_that) {
 case DashboardLoading():
 return loading();case DashboardReady():
-return ready(_that.firmedToday,_that.accuracy,_that.targetRetention,_that.subjects,_that.lastSession,_that.calibration,_that.previousCalibration,_that.load,_that.timeOnCard,_that.ceilingToday,_that.daysToTarget,_that.targetDate,_that.daysSinceBackup,_that.dayCleared,_that.deadlineReached,_that.intake,_that.canRevertTuning,_that.tuningMessage);case DashboardError():
+return ready(_that.firmedToday,_that.overview,_that.streak,_that.firmedSeries,_that.firmedAverage,_that.stuckCards,_that.weakestSubject,_that.nextAction,_that.accuracy,_that.targetRetention,_that.subjects,_that.lastSession,_that.calibration,_that.previousCalibration,_that.load,_that.loadAverage,_that.timeOnCard,_that.ceilingToday,_that.daysToTarget,_that.targetDate,_that.daysSinceBackup,_that.dayCleared,_that.deadlineReached,_that.intake,_that.canRevertTuning,_that.tuningMessage);case DashboardError():
 return error(_that.message);}
 }
 /// A variant of `when` that fallback to returning `null`
@@ -165,11 +165,11 @@ return error(_that.message);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  loading,TResult? Function( int firmedToday,  double? accuracy,  double targetRetention,  List<SubjectProgress> subjects,  StudySession? lastSession,  List<CalibrationPoint> calibration,  List<CalibrationPoint>? previousCalibration,  List<LoadBar> load,  TimeOnCardStats timeOnCard,  Duration ceilingToday,  int daysToTarget,  DateTime targetDate,  int? daysSinceBackup,  bool dayCleared,  bool deadlineReached,  IntakeRelease intake,  bool canRevertTuning,  String? tuningMessage)?  ready,TResult? Function( String message)?  error,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  loading,TResult? Function( int firmedToday,  CollectionOverview overview,  StudyStreak streak,  List<FirmedDay> firmedSeries,  double firmedAverage,  List<Card> stuckCards,  SubjectProgress? weakestSubject,  NextAction nextAction,  double? accuracy,  double targetRetention,  List<SubjectProgress> subjects,  StudySession? lastSession,  List<CalibrationPoint> calibration,  List<CalibrationPoint>? previousCalibration,  List<LoadBar> load,  double loadAverage,  TimeOnCardStats timeOnCard,  Duration ceilingToday,  int daysToTarget,  DateTime targetDate,  int? daysSinceBackup,  bool dayCleared,  bool deadlineReached,  IntakeRelease intake,  bool canRevertTuning,  String? tuningMessage)?  ready,TResult? Function( String message)?  error,}) {final _that = this;
 switch (_that) {
 case DashboardLoading() when loading != null:
 return loading();case DashboardReady() when ready != null:
-return ready(_that.firmedToday,_that.accuracy,_that.targetRetention,_that.subjects,_that.lastSession,_that.calibration,_that.previousCalibration,_that.load,_that.timeOnCard,_that.ceilingToday,_that.daysToTarget,_that.targetDate,_that.daysSinceBackup,_that.dayCleared,_that.deadlineReached,_that.intake,_that.canRevertTuning,_that.tuningMessage);case DashboardError() when error != null:
+return ready(_that.firmedToday,_that.overview,_that.streak,_that.firmedSeries,_that.firmedAverage,_that.stuckCards,_that.weakestSubject,_that.nextAction,_that.accuracy,_that.targetRetention,_that.subjects,_that.lastSession,_that.calibration,_that.previousCalibration,_that.load,_that.loadAverage,_that.timeOnCard,_that.ceilingToday,_that.daysToTarget,_that.targetDate,_that.daysSinceBackup,_that.dayCleared,_that.deadlineReached,_that.intake,_that.canRevertTuning,_that.tuningMessage);case DashboardError() when error != null:
 return error(_that.message);case _:
   return null;
 
@@ -214,11 +214,50 @@ String toString() {
 
 
 class DashboardReady implements DashboardState {
-  const DashboardReady({required this.firmedToday, required this.accuracy, required this.targetRetention, required  List<SubjectProgress> subjects, required this.lastSession, required  List<CalibrationPoint> calibration, required  List<CalibrationPoint>? previousCalibration, required  List<LoadBar> load, required this.timeOnCard, required this.ceilingToday, required this.daysToTarget, required this.targetDate, required this.daysSinceBackup, required this.dayCleared, required this.deadlineReached, required this.intake, required this.canRevertTuning, required this.tuningMessage}): _subjects = subjects,_calibration = calibration,_previousCalibration = previousCalibration,_load = load;
+  const DashboardReady({required this.firmedToday, required this.overview, required this.streak, required  List<FirmedDay> firmedSeries, required this.firmedAverage, required  List<Card> stuckCards, required this.weakestSubject, required this.nextAction, required this.accuracy, required this.targetRetention, required  List<SubjectProgress> subjects, required this.lastSession, required  List<CalibrationPoint> calibration, required  List<CalibrationPoint>? previousCalibration, required  List<LoadBar> load, required this.loadAverage, required this.timeOnCard, required this.ceilingToday, required this.daysToTarget, required this.targetDate, required this.daysSinceBackup, required this.dayCleared, required this.deadlineReached, required this.intake, required this.canRevertTuning, required this.tuningMessage}): _firmedSeries = firmedSeries,_stuckCards = stuckCards,_subjects = subjects,_calibration = calibration,_previousCalibration = previousCalibration,_load = load;
   
 
 /// Cards that crossed into "firm" today.
+///
+/// It stays a field of its own: deriving it from the last point of
+/// [firmedSeries] inside the widget would be domain arithmetic on the
+/// screen — and it would be wrong, because a card that crossed and lapsed
+/// on the same day counts in the series and not here.
  final  int firmedToday;
+/// The collection funnel: where each number below comes from.
+ final  CollectionOverview overview;
+/// Consecutive days of scheduled study.
+ final  StudyStreak streak;
+/// Cards firmed per day, last seven — the last point is today.
+ final  List<FirmedDay> _firmedSeries;
+/// Cards firmed per day, last seven — the last point is today.
+ List<FirmedDay> get firmedSeries {
+  if (_firmedSeries is EqualUnmodifiableListView) return _firmedSeries;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_firmedSeries);
+}
+
+/// Daily average of the series — the reference today's number is read
+/// against. It comes from `FirmedProgress.dailyAverage`: an average is an
+/// indicator, and a widget computing it would be a second authority on
+/// progress.
+ final  double firmedAverage;
+/// Stuck cards, already filtered by `ProgressStats.problemCards`.
+ final  List<Card> _stuckCards;
+/// Stuck cards, already filtered by `ProgressStats.problemCards`.
+ List<Card> get stuckCards {
+  if (_stuckCards is EqualUnmodifiableListView) return _stuckCards;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(_stuckCards);
+}
+
+/// The weakest subject, decided by `ProgressStats.weakestSubject`. `null`
+/// when no subject has been released — which is what disables the "Ver os
+/// assuntos fracos" button instead of letting it swallow the tap.
+ final  SubjectProgress? weakestSubject;
+/// The single action recommended now, already decided by
+/// `NextActionPolicy`.
+ final  NextAction nextAction;
 /// Real recall rate of scheduled study; `null` while nothing was reviewed.
  final  double? accuracy;
 /// The 0.90 the algorithm aims at — shown next to [accuracy].
@@ -256,15 +295,19 @@ class DashboardReady implements DashboardState {
   return EqualUnmodifiableListView(value);
 }
 
-/// One bar per day of the next seven.
+/// One point per day of the next seven.
  final  List<LoadBar> _load;
-/// One bar per day of the next seven.
+/// One point per day of the next seven.
  List<LoadBar> get load {
   if (_load is EqualUnmodifiableListView) return _load;
   // ignore: implicit_dynamic_type
   return EqualUnmodifiableListView(_load);
 }
 
+/// Average cards per day in the forecast — the reference line of the
+/// chart. It comes from `ProgressStats.averageLoad`, for the same reason
+/// as [firmedAverage]: no average is born inside a `CustomPainter`.
+ final  double loadAverage;
  final  TimeOnCardStats timeOnCard;
 /// Longest interval the schedule may hand out today.
  final  Duration ceilingToday;
@@ -294,16 +337,16 @@ $DashboardReadyCopyWith<DashboardReady> get copyWith => _$DashboardReadyCopyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is DashboardReady&&(identical(other.firmedToday, firmedToday) || other.firmedToday == firmedToday)&&(identical(other.accuracy, accuracy) || other.accuracy == accuracy)&&(identical(other.targetRetention, targetRetention) || other.targetRetention == targetRetention)&&const DeepCollectionEquality().equals(other._subjects, _subjects)&&(identical(other.lastSession, lastSession) || other.lastSession == lastSession)&&const DeepCollectionEquality().equals(other._calibration, _calibration)&&const DeepCollectionEquality().equals(other._previousCalibration, _previousCalibration)&&const DeepCollectionEquality().equals(other._load, _load)&&(identical(other.timeOnCard, timeOnCard) || other.timeOnCard == timeOnCard)&&(identical(other.ceilingToday, ceilingToday) || other.ceilingToday == ceilingToday)&&(identical(other.daysToTarget, daysToTarget) || other.daysToTarget == daysToTarget)&&(identical(other.targetDate, targetDate) || other.targetDate == targetDate)&&(identical(other.daysSinceBackup, daysSinceBackup) || other.daysSinceBackup == daysSinceBackup)&&(identical(other.dayCleared, dayCleared) || other.dayCleared == dayCleared)&&(identical(other.deadlineReached, deadlineReached) || other.deadlineReached == deadlineReached)&&(identical(other.intake, intake) || other.intake == intake)&&(identical(other.canRevertTuning, canRevertTuning) || other.canRevertTuning == canRevertTuning)&&(identical(other.tuningMessage, tuningMessage) || other.tuningMessage == tuningMessage));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is DashboardReady&&(identical(other.firmedToday, firmedToday) || other.firmedToday == firmedToday)&&(identical(other.overview, overview) || other.overview == overview)&&(identical(other.streak, streak) || other.streak == streak)&&const DeepCollectionEquality().equals(other._firmedSeries, _firmedSeries)&&(identical(other.firmedAverage, firmedAverage) || other.firmedAverage == firmedAverage)&&const DeepCollectionEquality().equals(other._stuckCards, _stuckCards)&&(identical(other.weakestSubject, weakestSubject) || other.weakestSubject == weakestSubject)&&(identical(other.nextAction, nextAction) || other.nextAction == nextAction)&&(identical(other.accuracy, accuracy) || other.accuracy == accuracy)&&(identical(other.targetRetention, targetRetention) || other.targetRetention == targetRetention)&&const DeepCollectionEquality().equals(other._subjects, _subjects)&&(identical(other.lastSession, lastSession) || other.lastSession == lastSession)&&const DeepCollectionEquality().equals(other._calibration, _calibration)&&const DeepCollectionEquality().equals(other._previousCalibration, _previousCalibration)&&const DeepCollectionEquality().equals(other._load, _load)&&(identical(other.loadAverage, loadAverage) || other.loadAverage == loadAverage)&&(identical(other.timeOnCard, timeOnCard) || other.timeOnCard == timeOnCard)&&(identical(other.ceilingToday, ceilingToday) || other.ceilingToday == ceilingToday)&&(identical(other.daysToTarget, daysToTarget) || other.daysToTarget == daysToTarget)&&(identical(other.targetDate, targetDate) || other.targetDate == targetDate)&&(identical(other.daysSinceBackup, daysSinceBackup) || other.daysSinceBackup == daysSinceBackup)&&(identical(other.dayCleared, dayCleared) || other.dayCleared == dayCleared)&&(identical(other.deadlineReached, deadlineReached) || other.deadlineReached == deadlineReached)&&(identical(other.intake, intake) || other.intake == intake)&&(identical(other.canRevertTuning, canRevertTuning) || other.canRevertTuning == canRevertTuning)&&(identical(other.tuningMessage, tuningMessage) || other.tuningMessage == tuningMessage));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,firmedToday,accuracy,targetRetention,const DeepCollectionEquality().hash(_subjects),lastSession,const DeepCollectionEquality().hash(_calibration),const DeepCollectionEquality().hash(_previousCalibration),const DeepCollectionEquality().hash(_load),timeOnCard,ceilingToday,daysToTarget,targetDate,daysSinceBackup,dayCleared,deadlineReached,intake,canRevertTuning,tuningMessage);
+int get hashCode => Object.hashAll([runtimeType,firmedToday,overview,streak,const DeepCollectionEquality().hash(_firmedSeries),firmedAverage,const DeepCollectionEquality().hash(_stuckCards),weakestSubject,nextAction,accuracy,targetRetention,const DeepCollectionEquality().hash(_subjects),lastSession,const DeepCollectionEquality().hash(_calibration),const DeepCollectionEquality().hash(_previousCalibration),const DeepCollectionEquality().hash(_load),loadAverage,timeOnCard,ceilingToday,daysToTarget,targetDate,daysSinceBackup,dayCleared,deadlineReached,intake,canRevertTuning,tuningMessage]);
 
 @override
 String toString() {
-  return 'DashboardState.ready(firmedToday: $firmedToday, accuracy: $accuracy, targetRetention: $targetRetention, subjects: $subjects, lastSession: $lastSession, calibration: $calibration, previousCalibration: $previousCalibration, load: $load, timeOnCard: $timeOnCard, ceilingToday: $ceilingToday, daysToTarget: $daysToTarget, targetDate: $targetDate, daysSinceBackup: $daysSinceBackup, dayCleared: $dayCleared, deadlineReached: $deadlineReached, intake: $intake, canRevertTuning: $canRevertTuning, tuningMessage: $tuningMessage)';
+  return 'DashboardState.ready(firmedToday: $firmedToday, overview: $overview, streak: $streak, firmedSeries: $firmedSeries, firmedAverage: $firmedAverage, stuckCards: $stuckCards, weakestSubject: $weakestSubject, nextAction: $nextAction, accuracy: $accuracy, targetRetention: $targetRetention, subjects: $subjects, lastSession: $lastSession, calibration: $calibration, previousCalibration: $previousCalibration, load: $load, loadAverage: $loadAverage, timeOnCard: $timeOnCard, ceilingToday: $ceilingToday, daysToTarget: $daysToTarget, targetDate: $targetDate, daysSinceBackup: $daysSinceBackup, dayCleared: $dayCleared, deadlineReached: $deadlineReached, intake: $intake, canRevertTuning: $canRevertTuning, tuningMessage: $tuningMessage)';
 }
 
 
@@ -314,7 +357,7 @@ abstract mixin class $DashboardReadyCopyWith<$Res> implements $DashboardStateCop
   factory $DashboardReadyCopyWith(DashboardReady value, $Res Function(DashboardReady) _then) = _$DashboardReadyCopyWithImpl;
 @useResult
 $Res call({
- int firmedToday, double? accuracy, double targetRetention, List<SubjectProgress> subjects, StudySession? lastSession, List<CalibrationPoint> calibration, List<CalibrationPoint>? previousCalibration, List<LoadBar> load, TimeOnCardStats timeOnCard, Duration ceilingToday, int daysToTarget, DateTime targetDate, int? daysSinceBackup, bool dayCleared, bool deadlineReached, IntakeRelease intake, bool canRevertTuning, String? tuningMessage
+ int firmedToday, CollectionOverview overview, StudyStreak streak, List<FirmedDay> firmedSeries, double firmedAverage, List<Card> stuckCards, SubjectProgress? weakestSubject, NextAction nextAction, double? accuracy, double targetRetention, List<SubjectProgress> subjects, StudySession? lastSession, List<CalibrationPoint> calibration, List<CalibrationPoint>? previousCalibration, List<LoadBar> load, double loadAverage, TimeOnCardStats timeOnCard, Duration ceilingToday, int daysToTarget, DateTime targetDate, int? daysSinceBackup, bool dayCleared, bool deadlineReached, IntakeRelease intake, bool canRevertTuning, String? tuningMessage
 });
 
 
@@ -331,17 +374,25 @@ class _$DashboardReadyCopyWithImpl<$Res>
 
 /// Create a copy of DashboardState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') $Res call({Object? firmedToday = null,Object? accuracy = freezed,Object? targetRetention = null,Object? subjects = null,Object? lastSession = freezed,Object? calibration = null,Object? previousCalibration = freezed,Object? load = null,Object? timeOnCard = null,Object? ceilingToday = null,Object? daysToTarget = null,Object? targetDate = null,Object? daysSinceBackup = freezed,Object? dayCleared = null,Object? deadlineReached = null,Object? intake = null,Object? canRevertTuning = null,Object? tuningMessage = freezed,}) {
+@pragma('vm:prefer-inline') $Res call({Object? firmedToday = null,Object? overview = null,Object? streak = null,Object? firmedSeries = null,Object? firmedAverage = null,Object? stuckCards = null,Object? weakestSubject = freezed,Object? nextAction = null,Object? accuracy = freezed,Object? targetRetention = null,Object? subjects = null,Object? lastSession = freezed,Object? calibration = null,Object? previousCalibration = freezed,Object? load = null,Object? loadAverage = null,Object? timeOnCard = null,Object? ceilingToday = null,Object? daysToTarget = null,Object? targetDate = null,Object? daysSinceBackup = freezed,Object? dayCleared = null,Object? deadlineReached = null,Object? intake = null,Object? canRevertTuning = null,Object? tuningMessage = freezed,}) {
   return _then(DashboardReady(
 firmedToday: null == firmedToday ? _self.firmedToday : firmedToday // ignore: cast_nullable_to_non_nullable
-as int,accuracy: freezed == accuracy ? _self.accuracy : accuracy // ignore: cast_nullable_to_non_nullable
+as int,overview: null == overview ? _self.overview : overview // ignore: cast_nullable_to_non_nullable
+as CollectionOverview,streak: null == streak ? _self.streak : streak // ignore: cast_nullable_to_non_nullable
+as StudyStreak,firmedSeries: null == firmedSeries ? _self._firmedSeries : firmedSeries // ignore: cast_nullable_to_non_nullable
+as List<FirmedDay>,firmedAverage: null == firmedAverage ? _self.firmedAverage : firmedAverage // ignore: cast_nullable_to_non_nullable
+as double,stuckCards: null == stuckCards ? _self._stuckCards : stuckCards // ignore: cast_nullable_to_non_nullable
+as List<Card>,weakestSubject: freezed == weakestSubject ? _self.weakestSubject : weakestSubject // ignore: cast_nullable_to_non_nullable
+as SubjectProgress?,nextAction: null == nextAction ? _self.nextAction : nextAction // ignore: cast_nullable_to_non_nullable
+as NextAction,accuracy: freezed == accuracy ? _self.accuracy : accuracy // ignore: cast_nullable_to_non_nullable
 as double?,targetRetention: null == targetRetention ? _self.targetRetention : targetRetention // ignore: cast_nullable_to_non_nullable
 as double,subjects: null == subjects ? _self._subjects : subjects // ignore: cast_nullable_to_non_nullable
 as List<SubjectProgress>,lastSession: freezed == lastSession ? _self.lastSession : lastSession // ignore: cast_nullable_to_non_nullable
 as StudySession?,calibration: null == calibration ? _self._calibration : calibration // ignore: cast_nullable_to_non_nullable
 as List<CalibrationPoint>,previousCalibration: freezed == previousCalibration ? _self._previousCalibration : previousCalibration // ignore: cast_nullable_to_non_nullable
 as List<CalibrationPoint>?,load: null == load ? _self._load : load // ignore: cast_nullable_to_non_nullable
-as List<LoadBar>,timeOnCard: null == timeOnCard ? _self.timeOnCard : timeOnCard // ignore: cast_nullable_to_non_nullable
+as List<LoadBar>,loadAverage: null == loadAverage ? _self.loadAverage : loadAverage // ignore: cast_nullable_to_non_nullable
+as double,timeOnCard: null == timeOnCard ? _self.timeOnCard : timeOnCard // ignore: cast_nullable_to_non_nullable
 as TimeOnCardStats,ceilingToday: null == ceilingToday ? _self.ceilingToday : ceilingToday // ignore: cast_nullable_to_non_nullable
 as Duration,daysToTarget: null == daysToTarget ? _self.daysToTarget : daysToTarget // ignore: cast_nullable_to_non_nullable
 as int,targetDate: null == targetDate ? _self.targetDate : targetDate // ignore: cast_nullable_to_non_nullable

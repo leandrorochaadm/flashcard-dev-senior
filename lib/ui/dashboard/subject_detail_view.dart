@@ -11,6 +11,7 @@ import '../../domain/models/enums.dart';
 import '../../domain/stats/calibration.dart';
 import '../../domain/stats/progress_stats.dart';
 import '../shared/app_scaffold.dart';
+import 'widgets/dashboard_metric_line.dart';
 
 /// One subject, read only: how it stands and how it went over the days.
 ///
@@ -60,8 +61,10 @@ class _SubjectDetailViewState extends State<SubjectDetailView> {
     }
 
     setState(() {
+      // The same call the dashboard makes, logs included, so the two screens
+      // never show different numbers for the same subject.
       _progress = stats
-          .subjectMap(clock.now())
+          .subjectMap(clock.now(), logs: logs.all)
           .firstWhereOrNull((entry) => entry.subject == widget.subject);
       _history = calibration.series(
         logs.all.where((log) => belongs(log.cardId)).toList(),
@@ -90,17 +93,35 @@ class _SubjectDetailViewState extends State<SubjectDetailView> {
                         Text('Como está o assunto',
                             style: theme.textTheme.titleMedium),
                         const SizedBox(height: 12),
-                        _Line(
+                        DashboardMetricLine(
                           label: 'Cartões firmes',
                           value: '${progress.firm} de ${progress.total}',
                         ),
-                        _Line(
+                        DashboardMetricLine(
                           label: 'Cartões travados',
                           value: '${progress.stuck}',
                         ),
-                        _Line(
+                        DashboardMetricLine(
                           label: 'Prontos para a data-alvo',
                           value: '${progress.ready} de ${progress.total}',
+                        ),
+                        DashboardMetricLine(
+                          label: 'Vencendo hoje',
+                          value: '${progress.dueToday}',
+                        ),
+                        DashboardMetricLine(
+                          label: 'Nunca respondidos',
+                          value: '${progress.neverAnswered}',
+                        ),
+                        DashboardMetricLine(
+                          label: 'Tempo médio',
+                          value: formatSeconds(progress.averageTime),
+                        ),
+                        DashboardMetricLine(
+                          label: 'Próximo vencimento',
+                          value: progress.nextDueAt == null
+                              ? 'tudo vencido'
+                              : formatDate(progress.nextDueAt!),
                         ),
                       ],
                     ),
@@ -119,7 +140,7 @@ class _SubjectDetailViewState extends State<SubjectDetailView> {
                     const Text('Ainda não há respostas neste assunto.')
                   else
                     for (final point in _history)
-                      _Line(
+                      DashboardMetricLine(
                         label: formatDate(point.day),
                         value: '${(point.actual * 100).toStringAsFixed(0)}% '
                             'em ${point.reviews} respostas',
@@ -140,7 +161,7 @@ class _SubjectDetailViewState extends State<SubjectDetailView> {
                     const Text('Este assunto ainda não caiu num simulado.')
                   else
                     for (final score in _mockScores)
-                      _Line(
+                      DashboardMetricLine(
                         label: score.subject,
                         value: '${score.recalled} de ${score.asked} '
                             '(${(score.accuracy * 100).toStringAsFixed(0)}%)',
@@ -155,22 +176,3 @@ class _SubjectDetailViewState extends State<SubjectDetailView> {
   }
 }
 
-class _Line extends StatelessWidget {
-  const _Line({required this.label, required this.value});
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        children: [
-          Expanded(child: Text(label)),
-          Text(value, style: Theme.of(context).textTheme.titleSmall),
-        ],
-      ),
-    );
-  }
-}

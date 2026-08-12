@@ -1,14 +1,18 @@
+import 'dart:async';
+
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 
 import '../../core/clock.dart';
 import '../../core/daily_release.dart';
+import '../../data/repositories/card_repository.dart';
 import '../../data/repositories/review_log_repository.dart';
 import '../../data/repositories/session_repository.dart';
 import '../../data/repositories/settings_repository.dart';
 import '../../domain/models/schedule_window.dart';
 import '../../domain/policies/content_intake_policy.dart';
 import '../../domain/policies/due_cards_policy.dart';
+import '../../domain/policies/next_action_policy.dart';
 import '../../domain/scheduling/fsrs_adapter.dart' show desiredRetention;
 import '../../domain/scheduling/fsrs_gateway.dart';
 import '../../domain/scheduling/moving_ceiling.dart';
@@ -33,7 +37,19 @@ class DashboardViewModel {
     this._sessions,
     this._settings,
     this._clock,
-  );
+    this._nextAction,
+    this._cards,
+  ) {
+    // The collection changes from outside the dashboard: the cards screen
+    // deletes and releases, the mirror import removes what left the file.
+    // Without this the panel keeps showing the question of a deleted card, and
+    // "you have 12 cards due today" after the session cleared the day.
+    //
+    // Re-entering through `load()`, not `_publish`: `DailyRelease.run()` is
+    // idempotent once today's batch has gone out, and it is what returns the
+    // `IntakeRelease` the intake notice shows.
+    _collectionChanges = _cards.changes.listen((_) => load());
+  }
 
   final ProgressStats _stats;
   final Calibration _calibration;
@@ -46,8 +62,12 @@ class DashboardViewModel {
   final SessionRepository _sessions;
   final SettingsRepository _settings;
   final Clock _clock;
+  final NextActionPolicy _nextAction;
+  final CardRepository _cards;
 
   final state = ValueNotifier<DashboardState>(const DashboardState.loading());
+
+  late final StreamSubscription<void> _collectionChanges;
 
   /// Message of the last tuning attempt, kept between reloads.
   String? _tuningMessage;
@@ -141,28 +161,53 @@ class DashboardViewModel {
     final previous = _settings.previousParams();
     final lastBackup = _settings.lastBackupAt;
 
+    // One reading of each, reused by more than one field. `firmedSummary` is a
+    // single call: it already brings the series, today's number and the
+    // average, and each of them separately would regroup and reorder the whole
+    // history. Reading three fields off a finished result is not arithmetic.
+    final firmed = _stats.firmedSummary(now, logs);
+    final overview = _stats.overview(now);
+    final subjects = _stats.subjectMap(now, logs: logs);
+    final load = _stats.loadForecast(now);
+    // Both feed two consumers now — the state and the policy — so they stop
+    // being computed inline.
+    final deadlineReached =
+        window.isPastDeadline(now) && !_settings.deadlineAnswered;
+    // Display formatting of an age, not a scheduling rule.
+    final daysSinceBackup = lastBackup == null
+        ? null
+        : dateOnly(now).difference(dateOnly(lastBackup)).inDays;
+
     state.value = DashboardState.ready(
-      firmedToday: _stats.firmedToday(now, logs),
+      firmedToday: firmed.today,
+      firmedSeries: firmed.series,
+      firmedAverage: firmed.dailyAverage,
+      overview: overview,
+      streak: _stats.streak(now, logs),
+      stuckCards: _stats.problemCards(),
+      weakestSubject: _stats.weakestSubject(subjects),
+      nextAction: _nextAction.decide(
+        overview: overview,
+        deadlineReached: deadlineReached,
+        daysSinceBackup: daysSinceBackup,
+      ),
       accuracy: _calibration.accuracy(logs),
       targetRetention: desiredRetention,
-      subjects: _stats.subjectMap(now),
+      subjects: subjects,
       lastSession: (await _sessions.all()).firstOrNull,
       calibration: _calibration.series(logs),
       previousCalibration: previous == null
           ? null
           : _calibration.seriesWithParameters(logs, previous.parameters),
-      load: _stats.loadForecast(now),
+      load: load,
+      loadAverage: _stats.averageLoad(load),
       timeOnCard: _stats.timeOnCard(logs),
       ceilingToday: _ceiling.forDate(now),
       daysToTarget: window.daysRemainingFrom(now),
       targetDate: window.targetDate,
-      // Display formatting of an age, not a scheduling rule.
-      daysSinceBackup: lastBackup == null
-          ? null
-          : dateOnly(now).difference(dateOnly(lastBackup)).inDays,
+      daysSinceBackup: daysSinceBackup,
       dayCleared: _dueCards.isDayCleared(now),
-      deadlineReached:
-          window.isPastDeadline(now) && !_settings.deadlineAnswered,
+      deadlineReached: deadlineReached,
       intake: release,
       canRevertTuning: previous != null,
       tuningMessage: _tuningMessage,
@@ -172,5 +217,8 @@ class DashboardViewModel {
   /// The weights in force, for the tuning panel.
   List<double> get parameters => _fsrs.parameters;
 
-  void dispose() => state.dispose();
+  void dispose() {
+    _collectionChanges.cancel();
+    state.dispose();
+  }
 }

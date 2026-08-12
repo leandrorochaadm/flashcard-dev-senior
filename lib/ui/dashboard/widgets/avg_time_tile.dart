@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../../../domain/policies/time_on_card_policy.dart';
 import '../../../domain/stats/progress_stats.dart';
+import '../../shared/app_scaffold.dart';
 
 /// Average time on a card, overall and broken down by subject.
 ///
@@ -25,12 +27,18 @@ class AvgTimeTile extends StatelessWidget {
             Text('Tempo médio por cartão', style: theme.textTheme.titleMedium),
             const SizedBox(height: 8),
             Text(
-              _format(stats.overall),
+              formatSeconds(stats.overall),
               style: theme.textTheme.headlineMedium,
             ),
             const SizedBox(height: 4),
+            // Derived from the policy, not written by hand: the ceiling moved
+            // from 60 s to 120 s and this line kept saying "1 minuto".
+            // Importing a policy constant is reading, not deciding — the
+            // discarding happens in `TimeOnCardPolicy.timeToRecord`, when the
+            // log is written.
             Text(
-              'Respostas acima de 1 minuto ficam de fora da média.',
+              'Respostas acima de ${TimeOnCardPolicy.ceiling.inSeconds} s '
+              'ficam de fora da média.',
               style: theme.textTheme.bodySmall,
             ),
             if (subjects.isNotEmpty) ...[
@@ -44,7 +52,7 @@ class AvgTimeTile extends StatelessWidget {
                         child: Text(subject, style: theme.textTheme.bodyMedium),
                       ),
                       Text(
-                        _format(stats.bySubject[subject]),
+                        formatSeconds(stats.bySubject[subject]),
                         style: theme.textTheme.bodyMedium,
                       ),
                     ],
@@ -55,11 +63,5 @@ class AvgTimeTile extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  static String _format(Duration? duration) {
-    if (duration == null) return '—';
-    final seconds = duration.inMilliseconds / 1000;
-    return '${seconds.toStringAsFixed(1)} s';
   }
 }

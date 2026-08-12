@@ -19,7 +19,11 @@ class IdleTimePanel extends StatelessWidget {
 
   final VoidCallback onImportMore;
   final VoidCallback onMockInterview;
-  final VoidCallback onWeakSubjects;
+
+  /// `null` disables the button and explains why. Who decided there is no weak
+  /// subject was `ProgressStats.weakestSubject`; before this, the View computed
+  /// a null weakest and the `if` swallowed the tap in silence.
+  final VoidCallback? onWeakSubjects;
 
   @override
   Widget build(BuildContext context) {
@@ -34,8 +38,12 @@ class IdleTimePanel extends StatelessWidget {
             Text('Você está em dia', style: theme.textTheme.titleMedium),
             const SizedBox(height: 4),
             Text(
+              // Counting enabled buttons is text formatting, not a rule: with
+              // the third one disabled, insisting on "três" would promise a way
+              // out that is not there.
               'Não há cartões esperando por hoje. Adiantar os de amanhã '
-              'desmontaria o espaçamento, então escolha um dos três:',
+              'desmontaria o espaçamento, então escolha um dos '
+              '${onWeakSubjects == null ? 'dois' : 'três'}:',
               style: theme.textTheme.bodySmall,
             ),
             const SizedBox(height: 16),
@@ -58,10 +66,18 @@ class IdleTimePanel extends StatelessWidget {
             SizedBox(
               width: double.infinity,
               child: OutlinedButton(
+                // A null `onPressed` disables the button on its own.
                 onPressed: onWeakSubjects,
                 child: const Text('Ver os assuntos fracos'),
               ),
             ),
+            if (onWeakSubjects == null) ...[
+              const SizedBox(height: 4),
+              Text(
+                'Nenhum assunto liberado ainda — não há mapa para mostrar.',
+                style: theme.textTheme.bodySmall,
+              ),
+            ],
           ],
         ),
       ),

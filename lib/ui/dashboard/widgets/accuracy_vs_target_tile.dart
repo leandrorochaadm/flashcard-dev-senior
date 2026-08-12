@@ -4,6 +4,9 @@ import 'package:flutter/material.dart';
 ///
 /// Both numbers come ready: [accuracy] from `Calibration.accuracy` and
 /// [target] from the FSRS adapter's `desiredRetention`.
+///
+/// One of the four compact tiles of the metric strip: padding 12 and short
+/// supporting text, so two tiles fit side by side on a 360-point phone.
 class AccuracyVsTargetTile extends StatelessWidget {
   const AccuracyVsTargetTile({
     required this.accuracy,
@@ -22,7 +25,7 @@ class AccuracyVsTargetTile extends StatelessWidget {
 
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -40,11 +43,10 @@ class AccuracyVsTargetTile extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               value == null
-                  ? 'Ainda não há respostas de sessão para comparar.'
+                  ? 'Sem respostas de sessão ainda.'
                   : value >= target
-                      ? 'Você está acertando no ritmo previsto.'
-                      : 'Você está acertando abaixo do previsto — os '
-                          'intervalos vão encurtar sozinhos.',
+                      ? 'No ritmo previsto.'
+                      : 'Abaixo do previsto — os intervalos encurtam sozinhos.',
               style: theme.textTheme.bodySmall,
             ),
           ],

@@ -1,8 +1,14 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
+// The state file does not import `material.dart`, so there is no clash with
+// the Material `Card` and the domain model can be imported directly. The
+// widgets are another story.
+import '../../domain/models/card.dart';
 import '../../domain/models/study_session.dart';
 import '../../domain/policies/content_intake_policy.dart';
+import '../../domain/policies/next_action_policy.dart';
 import '../../domain/stats/calibration.dart';
+import '../../domain/stats/collection_overview.dart';
 import '../../domain/stats/progress_stats.dart';
 
 part 'dashboard_state.freezed.dart';
@@ -19,7 +25,39 @@ sealed class DashboardState with _$DashboardState {
 
   const factory DashboardState.ready({
     /// Cards that crossed into "firm" today.
+    ///
+    /// It stays a field of its own: deriving it from the last point of
+    /// [firmedSeries] inside the widget would be domain arithmetic on the
+    /// screen — and it would be wrong, because a card that crossed and lapsed
+    /// on the same day counts in the series and not here.
     required int firmedToday,
+
+    /// The collection funnel: where each number below comes from.
+    required CollectionOverview overview,
+
+    /// Consecutive days of scheduled study.
+    required StudyStreak streak,
+
+    /// Cards firmed per day, last seven — the last point is today.
+    required List<FirmedDay> firmedSeries,
+
+    /// Daily average of the series — the reference today's number is read
+    /// against. It comes from `FirmedProgress.dailyAverage`: an average is an
+    /// indicator, and a widget computing it would be a second authority on
+    /// progress.
+    required double firmedAverage,
+
+    /// Stuck cards, already filtered by `ProgressStats.problemCards`.
+    required List<Card> stuckCards,
+
+    /// The weakest subject, decided by `ProgressStats.weakestSubject`. `null`
+    /// when no subject has been released — which is what disables the "Ver os
+    /// assuntos fracos" button instead of letting it swallow the tap.
+    required SubjectProgress? weakestSubject,
+
+    /// The single action recommended now, already decided by
+    /// `NextActionPolicy`.
+    required NextAction nextAction,
 
     /// Real recall rate of scheduled study; `null` while nothing was reviewed.
     required double? accuracy,
@@ -40,8 +78,13 @@ sealed class DashboardState with _$DashboardState {
     /// tuning. `null` when there has never been one.
     required List<CalibrationPoint>? previousCalibration,
 
-    /// One bar per day of the next seven.
+    /// One point per day of the next seven.
     required List<LoadBar> load,
+
+    /// Average cards per day in the forecast — the reference line of the
+    /// chart. It comes from `ProgressStats.averageLoad`, for the same reason
+    /// as [firmedAverage]: no average is born inside a `CustomPainter`.
+    required double loadAverage,
     required TimeOnCardStats timeOnCard,
 
     /// Longest interval the schedule may hand out today.

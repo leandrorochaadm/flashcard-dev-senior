@@ -79,6 +79,14 @@ String formatDays(Duration duration) {
   return '${duration.inMinutes} min';
 }
 
+/// A time on a card, or an em dash when there is nothing measured yet. Shared
+/// by the average-time tile and the expanded subject map, so the two never
+/// print the same duration differently.
+String formatSeconds(Duration? duration) {
+  if (duration == null) return '—';
+  return '${(duration.inMilliseconds / 1000).toStringAsFixed(1)} s';
+}
+
 String formatDate(DateTime date) =>
     '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}';
 
