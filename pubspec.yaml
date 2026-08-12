@@ -1,5 +1,8 @@
 name: flashcard_dev_senior
 description: "Cartões de estudo com FSRS para a preparação de entrevista de Flutter sênior."
+# SPDX-License-Identifier: PolyForm-Noncommercial-1.0.0
+# Uso não comercial. Texto completo em LICENSE.
+repository: https://github.com/leandrorochaadm/flashcard-dev-senior
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev

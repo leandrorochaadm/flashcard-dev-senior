@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: PolyForm-Noncommercial-1.0.0
+// Required Notice: Copyright 2026 Leandro Rocha (https://github.com/leandrorochaadm)
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';

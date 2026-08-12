@@ -28,7 +28,7 @@ Documentos `.md`, mensagens de commit e a conversa continuam em português.
 ## Estado atual
 
 **As 16 histórias estão implementadas.** `flutter analyze` sai limpo e
-`flutter test` roda 152 testes, com **100% de cobertura de linha em `domain/` e
+`flutter test` roda 271 testes, com **100% de cobertura de linha em `domain/` e
 `data/`** — nenhum deles usa `WidgetTester`. `flutter build web --release`
 compila; use `tool/build_web.sh`, que carimba versão, build e hash do commit
 (lidos do `pubspec.yaml` e do git) na tela `/sobre`.
@@ -89,9 +89,11 @@ dart run build_runner build --delete-conflicting-outputs       # freezed/json
 dart run build_runner watch --delete-conflicting-outputs
 ```
 
-Todo modelo `freezed`/`json_serializable` exige rodar o `build_runner` antes de
-`analyze` ou `test` — os arquivos `.freezed.dart` e `.g.dart` não são versionados.
-Numa clonagem limpa, `flutter analyze` falha em cascata até o gerador rodar.
+Mexeu em modelo `freezed`/`json_serializable`? Rode o `build_runner` antes de
+`analyze` ou `test`. Os arquivos `.freezed.dart` e `.g.dart` **são versionados**
+(desde `22934d8`), então uma clonagem limpa compila sem o gerador e o CI não o
+executa — mas o código gerado precisa ser commitado junto com a mudança do
+modelo, ou o CI quebra contra o arquivo velho.
 
 **`flutter test` roda na VM Dart, não no navegador.** Domínio e policies rodam
 assim (é o objetivo da fronteira sem Flutter). Já o `sembast_web` depende de

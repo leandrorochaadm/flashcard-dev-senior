@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Vulnerabilidade de segurança
+    url: https://github.com/leandrorochaadm/flashcard-dev-senior/security/advisories/new
+    about: Não abra issue pública — reporte por advisory privado.
+  - name: Dúvida sobre arquitetura ou sobre as regras de agendamento
+    url: https://github.com/leandrorochaadm/flashcard-dev-senior/blob/main/CLAUDE.md
+    about: O documento técnico responde a maioria das dúvidas de implementação.
