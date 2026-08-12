@@ -65,6 +65,21 @@ final class SembastAdapter implements AppDatabase {
   Future<void> deleteCard(String id) => _cards.record(id).delete(_db).then((_) {});
 
   @override
+  Future<void> deleteCards(Iterable<String> ids) => _db.transaction((txn) async {
+        for (final id in ids) {
+          await _cards.record(id).delete(txn);
+        }
+      });
+
+  @override
+  Future<void> deleteReviewsOfCards(Set<String> cardIds) => _reviews
+      .delete(
+        _db,
+        finder: Finder(filter: Filter.inList('cardId', cardIds.toList())),
+      )
+      .then((_) {});
+
+  @override
   Future<void> appendReview(Map<String, Object?> value) =>
       _reviews.add(_db, value).then((_) {});
 

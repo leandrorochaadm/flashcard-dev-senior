@@ -5,7 +5,7 @@ import '../../domain/ports.dart';
 import '../database/app_database.dart';
 
 /// Append-only history. Base of the calibration chart and of the optimizer.
-final class ReviewLogRepository implements StudyHistoryView {
+final class ReviewLogRepository implements StudyHistoryView, HistoryEraser {
   ReviewLogRepository(this._db);
 
   final AppDatabase _db;
@@ -27,6 +27,12 @@ final class ReviewLogRepository implements StudyHistoryView {
   Future<void> append(ReviewLog log) async {
     _logs.add(log);
     await _db.appendReview(log.toJson());
+  }
+
+  @override
+  Future<void> deleteForCards(Set<String> cardIds) async {
+    _logs.removeWhere((log) => cardIds.contains(log.cardId));
+    await _db.deleteReviewsOfCards(cardIds);
   }
 
   @override

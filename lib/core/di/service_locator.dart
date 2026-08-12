@@ -11,6 +11,7 @@ import '../../data/repositories/card_repository.dart';
 import '../../data/repositories/review_log_repository.dart';
 import '../../data/repositories/session_repository.dart';
 import '../../data/repositories/settings_repository.dart';
+import '../../domain/cards/card_deletion_service.dart';
 import '../../domain/import/dart_code_formatter.dart';
 import '../../domain/import/import_service.dart';
 import '../../domain/import/markdown_parser.dart';
@@ -97,6 +98,12 @@ Future<void> setupLocator({
       () => MarkdownParser(DartCodeFormatter()),
     )
     ..registerLazySingleton<ImportService>(() => ImportService(getIt(), getIt()))
+    ..registerLazySingleton<CardDeletionService>(
+      () => CardDeletionService(
+        getIt<CardRepository>(),
+        getIt<ReviewLogRepository>(),
+      ),
+    )
     ..registerLazySingleton<Calibration>(Calibration.new)
     ..registerLazySingleton<ProgressStats>(
       () => ProgressStats(getIt(), getIt(), getIt()),

@@ -12,9 +12,14 @@ abstract interface class AppDatabase {
   Future<void> saveCard(String id, Map<String, Object?> value);
   Future<void> saveCards(Map<String, Map<String, Object?>> values);
   Future<void> deleteCard(String id);
+  Future<void> deleteCards(Iterable<String> ids);
 
   Future<void> appendReview(Map<String, Object?> value);
   Future<List<Map<String, Object?>>> allReviews();
+
+  /// Drops the history of cards that no longer exist. Append-only holds for
+  /// study; erasing a card is the one thing that also erases its reviews.
+  Future<void> deleteReviewsOfCards(Set<String> cardIds);
 
   Future<Object?> readSetting(String key);
   Future<void> writeSetting(String key, Object? value);

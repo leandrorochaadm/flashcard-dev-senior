@@ -30,6 +30,20 @@ abstract interface class CardWriter {
   Future<void> saveAll(Iterable<Card> cards);
 }
 
+/// Removing cards for good. `CardRepository` implements it.
+abstract interface class CardEraser {
+  Future<void> deleteAll(Iterable<String> ids);
+}
+
+/// Removing the history of cards that no longer exist.
+///
+/// The history is append-only for study, but a card that was erased must take
+/// its reviews with it: calibration and the optimizer read every session log,
+/// and logs pointing at a card nobody can see would keep steering the schedule.
+abstract interface class HistoryEraser {
+  Future<void> deleteForCards(Set<String> cardIds);
+}
+
 /// The day the last batch went out, and why it was the size it was.
 ///
 /// The reason is persisted, not just held in memory: the page reloads — by the

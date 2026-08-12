@@ -118,6 +118,18 @@ class SessionViewModel {
     final card = _currentCard;
     final current = _session;
     if (card == null || current == null) return;
+
+    // The card on screen is a snapshot taken when the round served it. It can
+    // be gone by now: the collection screen and the mirroring import erase
+    // cards while this session sits on the navigation stack. Saving the
+    // snapshot would resurrect an erased card and log a review for it, so the
+    // answer is dropped and the round moves on.
+    if (_cards.byId(card.id) == null) {
+      _answeredThisRound.add(card.id);
+      _showNextCard();
+      return;
+    }
+
     final now = _clock.now();
 
     // Read before applying: afterwards the card already carries the new

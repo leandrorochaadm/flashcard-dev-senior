@@ -6,6 +6,20 @@ import '../../support/domain_fakes.dart';
 void main() {
   final importedAt = DateTime(2026, 8, 11);
 
+  test('counts the cards of every subject', () {
+    final counts = CardListingPolicy.countBySubject([
+      newCard('a', importedAt: importedAt, subject: 'Estado'),
+      newCard('b', importedAt: importedAt, subject: 'Estado'),
+      newCard('c', importedAt: importedAt, subject: 'Testes'),
+    ]);
+
+    expect(counts, {'Estado': 2, 'Testes': 1});
+  });
+
+  test('counts nothing for an empty collection', () {
+    expect(CardListingPolicy.countBySubject([]), isEmpty);
+  });
+
   test('sorts by dueAt ascending', () {
     final late = newCard('late',
         importedAt: importedAt, dueAt: DateTime(2026, 8, 20));

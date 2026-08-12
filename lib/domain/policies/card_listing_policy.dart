@@ -21,6 +21,17 @@ final class CardListingPolicy {
     return [...problems, ...rest];
   }
 
+  /// How many cards each subject holds, so the filter chips can show the size
+  /// of what they select. Counting cards per subject is a question about the
+  /// collection, not about the screen that paints it.
+  static Map<String, int> countBySubject(List<Card> cards) {
+    final counts = <String, int>{};
+    for (final card in cards) {
+      counts[card.subject] = (counts[card.subject] ?? 0) + 1;
+    }
+    return counts;
+  }
+
   static int _byDueDateAscending(Card a, Card b) {
     final dueA = a.dueAt;
     final dueB = b.dueAt;
