@@ -18,6 +18,7 @@ import '../../domain/import/markdown_parser.dart';
 import '../../domain/mock_interview/mock_interview_service.dart';
 import '../../domain/policies/content_intake_policy.dart';
 import '../../domain/policies/due_cards_policy.dart';
+import '../../domain/policies/next_action_policy.dart';
 import '../../domain/policies/session_policy.dart';
 import '../../domain/policies/time_on_card_policy.dart';
 import '../../domain/ports.dart';
@@ -76,6 +77,7 @@ Future<void> setupLocator({
     )
     ..registerLazySingleton<SessionPolicy>(SessionPolicy.new)
     ..registerLazySingleton<TimeOnCardPolicy>(TimeOnCardPolicy.new)
+    ..registerLazySingleton<NextActionPolicy>(NextActionPolicy.new)
     ..registerLazySingleton<DueCardsPolicy>(() => DueCardsPolicy(getIt()))
     ..registerLazySingleton<ContentIntakePolicy>(
       () => ContentIntakePolicy(getIt(), getIt(), getIt(), getIt()),

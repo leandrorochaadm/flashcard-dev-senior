@@ -22,8 +22,17 @@ void main() {
   });
 
   test('a subject with no cards reports zero ratios instead of NaN', () {
-    const progress =
-        SubjectProgress(subject: 'Estado', total: 0, ready: 0, firm: 0, stuck: 0);
+    const progress = SubjectProgress(
+      subject: 'Estado',
+      total: 0,
+      ready: 0,
+      firm: 0,
+      stuck: 0,
+      dueToday: 0,
+      neverAnswered: 0,
+      nextDueAt: null,
+      averageTime: null,
+    );
 
     expect(progress.readyRatio, 0);
     expect(progress.firmRatio, 0);

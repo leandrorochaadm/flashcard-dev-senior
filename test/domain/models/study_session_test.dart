@@ -81,6 +81,47 @@ void main() {
       expect(back.finished, isFalse);
     });
 
+    test('the four totals sum every round of the session', () {
+      var session = policy.start('s1', startedAt, subjects);
+      session = policy.registerAnswer(session, Rating.again);
+      session = policy.registerAnswer(session, Rating.hard);
+      session = policy.advanceRound(session);
+      session = policy.registerAnswer(session, Rating.again);
+      session = policy.registerAnswer(session, Rating.good);
+      session = policy.registerAnswer(session, Rating.easy);
+
+      expect(session.againTotal, 2, reason: 'it crosses the rounds');
+      expect(session.hardTotal, 1);
+      expect(session.goodTotal, 1);
+      expect(session.easyTotal, 1);
+    });
+
+    test('a session with no answers totals zero on the four buttons', () {
+      final session = policy.start('s1', startedAt, subjects);
+
+      expect(session.againTotal, 0);
+      expect(session.hardTotal, 0);
+      expect(session.goodTotal, 0);
+      expect(session.easyTotal, 0);
+      expect(session.answered, 0);
+    });
+
+    test('recalled equals hard plus good plus easy', () {
+      var session = policy.start('s1', startedAt, subjects);
+      for (final rating in Rating.values) {
+        session = policy.registerAnswer(session, rating);
+      }
+
+      expect(
+        session.recalled,
+        session.hardTotal + session.goodTotal + session.easyTotal,
+      );
+      expect(
+        session.answered,
+        session.againTotal + session.recalled,
+      );
+    });
+
     test('ticking past zero never goes negative', () {
       var session = policy.start('s1', startedAt, subjects);
       session = policy.tick(session, const Duration(minutes: 12));

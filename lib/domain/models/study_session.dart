@@ -82,4 +82,23 @@ sealed class StudySession with _$StudySession {
   int get answered => scores.fold(0, (sum, score) => sum + score.answered);
 
   int get recalled => scores.fold(0, (sum, score) => sum + score.recalled);
+
+  /// The four buttons summed across every round of the session.
+  ///
+  /// `RoundScore` has kept them apart since the first session was recorded and
+  /// no screen ever showed them: the dashboard collapsed everything into
+  /// [recalled], and "half the answers were 'Lembrei com esforço'" is a
+  /// different reading from "8/12". Summing across rounds is the model's job,
+  /// not the screen's.
+  ///
+  /// These are getters written in the body of the class, so they never pass
+  /// through the generator: the persisted JSON does not change and
+  /// `AppDatabase.schemaVersion` is not incremented.
+  int get againTotal => scores.fold(0, (sum, score) => sum + score.again);
+
+  int get hardTotal => scores.fold(0, (sum, score) => sum + score.hard);
+
+  int get goodTotal => scores.fold(0, (sum, score) => sum + score.good);
+
+  int get easyTotal => scores.fold(0, (sum, score) => sum + score.easy);
 }
