@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 
 import '../../core/router.dart';
+// Re-exported so every screen that already imports the scaffold keeps getting
+// `formatDate` and friends; the widgets that need only formatting import
+// `formatting.dart` directly and stay off the router.
+export 'formatting.dart';
 
 /// Shared chrome: title, back arrow and the navigation the four windows use.
 class AppScaffold extends StatelessWidget {
@@ -68,30 +72,4 @@ class _AppNavigation extends StatelessWidget {
       ],
     );
   }
-}
-
-/// Small helpers shared by the screens; formatting is a View concern.
-String formatDays(Duration duration) {
-  final days = duration.inMinutes / 1440;
-  if (days >= 1) return '${days.toStringAsFixed(1)} dia${days >= 2 ? 's' : ''}';
-  final hours = duration.inMinutes / 60;
-  if (hours >= 1) return '${hours.toStringAsFixed(0)} h';
-  return '${duration.inMinutes} min';
-}
-
-/// A time on a card, or an em dash when there is nothing measured yet. Shared
-/// by the average-time tile and the expanded subject map, so the two never
-/// print the same duration differently.
-String formatSeconds(Duration? duration) {
-  if (duration == null) return '—';
-  return '${(duration.inMilliseconds / 1000).toStringAsFixed(1)} s';
-}
-
-String formatDate(DateTime date) =>
-    '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}';
-
-String formatClock(Duration duration) {
-  final minutes = duration.inMinutes.remainder(60).toString().padLeft(2, '0');
-  final seconds = duration.inSeconds.remainder(60).toString().padLeft(2, '0');
-  return '$minutes:$seconds';
 }

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../shared/app_scaffold.dart';
+import '../../shared/formatting.dart';
 
 /// H13: the target date arrived.
 ///

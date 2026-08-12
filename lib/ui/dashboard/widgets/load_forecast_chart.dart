@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../domain/stats/progress_stats.dart';
-import '../../shared/app_scaffold.dart';
+import '../../shared/formatting.dart';
 
 /// "Quanto vem pela frente": one point per day of the next seven.
 ///

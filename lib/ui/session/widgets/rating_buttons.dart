@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../domain/models/enums.dart';
-import '../../shared/app_scaffold.dart';
+import '../../shared/formatting.dart';
 
 /// The four buttons, in screen order, each showing the interval it would
 /// schedule.

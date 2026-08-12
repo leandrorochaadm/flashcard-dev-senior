@@ -4,7 +4,7 @@ import '../../../domain/import/import_preview.dart';
 import '../../../domain/import/import_service.dart';
 import '../../../domain/models/card.dart' as domain;
 import '../../../domain/models/enums.dart';
-import '../../shared/app_scaffold.dart';
+import '../../shared/formatting.dart';
 
 /// What was understood and what was not, before anything is written.
 ///

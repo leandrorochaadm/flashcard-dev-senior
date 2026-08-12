@@ -6,6 +6,7 @@ import 'package:flashcard_dev_senior/data/repositories/session_repository.dart';
 import 'package:flashcard_dev_senior/data/repositories/settings_repository.dart';
 import 'package:flashcard_dev_senior/domain/models/enums.dart';
 import 'package:flashcard_dev_senior/domain/models/review_log.dart';
+import 'package:flashcard_dev_senior/domain/policies/content_intake_policy.dart';
 import 'package:flashcard_dev_senior/domain/policies/session_policy.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sembast/sembast_memory.dart';
@@ -31,6 +32,27 @@ void main() {
 
       expect(reopened.byId('a'), isNotNull);
       expect(reopened.byId('nope'), isNull);
+    });
+
+    test('an answered card comes back with its dates, not with nulls',
+        () async {
+      // Every nullable date of the card has two branches through the JSON, and
+      // a card that was never answered only exercises one of them.
+      final db = await openDatabase();
+      final repository = CardRepository(db);
+      await repository.save(
+        newCard('a', importedAt: importedAt, introducedAt: importedAt, dueAt: now)
+            .copyWith(lastReviewedAt: now, reps: 3),
+      );
+
+      final reopened = CardRepository(db);
+      await reopened.load();
+
+      final back = reopened.byId('a')!;
+      expect(back.lastReviewedAt, now);
+      expect(back.dueAt, now);
+      expect(back.introducedAt, importedAt);
+      expect(back.reps, 3);
     });
 
     test('a card can be recognized by its question text', () async {
@@ -202,6 +224,27 @@ void main() {
       final reopened = SettingsRepository(db);
       await reopened.load(now);
       expect(reopened.deadlineAnswered, isTrue);
+    });
+
+    test('the release journal survives a reopening, reason and quota included',
+        () async {
+      // The reason is persisted, not just held in memory: the page reloads —
+      // by the user, and by the service worker when a new build activates —
+      // and the app must never shrink the intake in silence.
+      final db = await openDatabase();
+      final settings = SettingsRepository(db);
+      await settings.load(now);
+      expect(settings.lastReleaseAt, isNull);
+      expect(settings.lastReleaseReason, isNull);
+      expect(settings.lastReleaseQuota, isNull);
+
+      await settings.markReleased(now, IntakeReason.reducedByLowStudy, 12);
+
+      final reopened = SettingsRepository(db);
+      await reopened.load(now);
+      expect(reopened.lastReleaseAt, now);
+      expect(reopened.lastReleaseReason, IntakeReason.reducedByLowStudy);
+      expect(reopened.lastReleaseQuota, 12);
     });
 
     test('reading the window before load() fails loudly', () {

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../shared/app_scaffold.dart';
+import '../../shared/formatting.dart';
 
 /// Round clock, optional card stopwatch, pause and round number.
 class RoundTimer extends StatelessWidget {

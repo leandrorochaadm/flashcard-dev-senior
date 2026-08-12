@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../domain/stats/progress_stats.dart';
-import '../../shared/app_scaffold.dart';
+import '../../shared/formatting.dart';
 import 'dashboard_metric_line.dart';
 
 /// The subject map: where you are strong and where you are weak.

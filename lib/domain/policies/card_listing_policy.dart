@@ -7,9 +7,10 @@ import '../models/card.dart';
 /// ascending — the most overdue (or soonest) card first. A card without a
 /// `dueAt` (not yet released, or never reviewed) has nothing to sort by, so
 /// it sinks to the end of its group instead of before every dated card.
-final class CardListingPolicy {
-  const CardListingPolicy._();
-
+/// `abstract final`, the same shape `AppRoutes` uses: everything here is
+/// static, so there is nothing to instantiate and no private constructor left
+/// sitting uncovered.
+abstract final class CardListingPolicy {
   static List<Card> sortForCollection(List<Card> cards) {
     final problems = <Card>[];
     final rest = <Card>[];

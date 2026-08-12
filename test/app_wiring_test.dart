@@ -11,6 +11,7 @@ import 'package:flashcard_dev_senior/domain/mock_interview/mock_interview_servic
 import 'package:flashcard_dev_senior/domain/models/enums.dart';
 import 'package:flashcard_dev_senior/domain/policies/content_intake_policy.dart';
 import 'package:flashcard_dev_senior/domain/policies/due_cards_policy.dart';
+import 'package:flashcard_dev_senior/domain/policies/next_action_policy.dart';
 import 'package:flashcard_dev_senior/domain/scheduling/card_scheduler.dart';
 import 'package:flashcard_dev_senior/domain/scheduling/fsrs_gateway.dart';
 import 'package:flashcard_dev_senior/domain/scheduling/moving_ceiling.dart';
@@ -50,6 +51,11 @@ void main() {
     expect(getIt<MockInterviewService>(), isNotNull);
     expect(getIt<ProgressStats>(), isNotNull);
     expect(getIt<ImportService>(), isNotNull);
+    // The two dependencies the dashboard resolves last, in the order its
+    // constructor declares them: a positional list swaps without a compile
+    // error, and this is what proves both are actually registered.
+    expect(getIt<NextActionPolicy>(), isNotNull);
+    expect(getIt<CardRepository>(), isNotNull);
     expect(getIt<FsrsGateway>().parameters.length, 21);
     expect(getIt<ReviewLogRepository>().count, 0);
     expect(await getIt<SessionRepository>().unfinished(), isNull);

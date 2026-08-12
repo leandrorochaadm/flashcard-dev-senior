@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../domain/policies/time_on_card_policy.dart';
 import '../../../domain/stats/progress_stats.dart';
-import '../../shared/app_scaffold.dart';
+import '../../shared/formatting.dart';
 
 /// Average time on a card, overall and broken down by subject.
 ///

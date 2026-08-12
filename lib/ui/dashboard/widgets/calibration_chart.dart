@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../domain/stats/calibration.dart';
-import '../../shared/app_scaffold.dart';
+import '../../shared/formatting.dart';
 
 /// The only indicator that audits the app: what it predicted against what
 /// actually happened, day by day.
