@@ -9,6 +9,7 @@ import '../shared/app_scaffold.dart';
 import 'session_state.dart';
 import 'session_viewmodel.dart';
 import 'widgets/card_face.dart';
+import 'widgets/confirm_stopping.dart';
 import 'widgets/rating_buttons.dart';
 import 'widgets/round_break_screen.dart';
 import 'widgets/round_timer.dart';
@@ -47,6 +48,21 @@ class _SessionViewState extends State<SessionView> {
   void dispose() {
     _viewModel.dispose();
     super.dispose();
+  }
+
+  /// Ending the session drops the rounds that were still to come, so it asks
+  /// first — like ending a single round does. No pause to manage here: at the
+  /// turn of the round there is no clock running.
+  Future<void> _confirmEndSession(BuildContext context) async {
+    final confirmed = await confirmStopping(
+      context,
+      title: 'Encerrar a sessão?',
+      message: 'Os rounds que faltam não serão estudados agora. O placar do '
+          'que você já respondeu continua valendo.',
+      confirmLabel: 'Encerrar a sessão',
+      keepLabel: 'Continuar a sessão',
+    );
+    if (confirmed) await _viewModel.endSession();
   }
 
   @override
@@ -109,14 +125,17 @@ class _SessionViewState extends State<SessionView> {
           SessionRoundBreak(
             :final finished,
             :final next,
-            :final remainingDueCards
+            :final remainingDueCards,
+            :final endedEarly
           ) =>
             RoundBreakScreen(
               finished: finished,
               next: next,
               remainingDueCards: remainingDueCards,
+              endedEarly: endedEarly,
               onContinue: _viewModel.nextRound,
               onExtend: _viewModel.extendRound,
+              onEndSession: () => _confirmEndSession(context),
             ),
           SessionScoreboard(:final session) => _Scoreboard(session: session),
           SessionDayCleared() => const _DayClearedScreen(),
@@ -145,6 +164,34 @@ class _StudyBody extends StatelessWidget {
   final Widget face;
   final Widget footer;
 
+  /// The stop button sits next to the pause button on a 390-point phone, and
+  /// there is no way back into the round it ends — so it asks first. The
+  /// dialog lives here, in the View: the ViewModel never sees a
+  /// `BuildContext`.
+  ///
+  /// Reading the question is not studying, so the round pauses while the
+  /// dialog is up. Otherwise the seconds spent deciding would land in the
+  /// card's `timeOnCard`, and a round could reach zero on its own with the
+  /// dialog still on screen — the answer would then relabel a round that had
+  /// already ended by itself.
+  Future<void> _confirmEndRound(BuildContext context) async {
+    final wasPaused = viewModel.paused.value;
+    if (!wasPaused) viewModel.togglePause();
+    final confirmed = await confirmStopping(
+      context,
+      title: 'Encerrar o round?',
+      message: 'O tempo que resta é descartado. As respostas que você já deu '
+          'continuam valendo.',
+      confirmLabel: 'Encerrar',
+      keepLabel: 'Continuar estudando',
+    );
+    if (confirmed) {
+      await viewModel.endRound();
+    } else if (!wasPaused) {
+      viewModel.togglePause();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -169,6 +216,7 @@ class _StudyBody extends StatelessWidget {
                   elapsedOnCard: elapsed,
                   onTogglePause: viewModel.togglePause,
                   onToggleStopwatch: viewModel.toggleStopwatch,
+                  onEndRound: () => _confirmEndRound(context),
                 ),
               ),
             ),

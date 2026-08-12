@@ -6,7 +6,7 @@
 abstract interface class AppDatabase {
   /// Every stored model that changes the persisted JSON has to bump this and
   /// ship a migration — otherwise yesterday's backup breaks tomorrow's app.
-  static const schemaVersion = 1;
+  static const schemaVersion = 2;
 
   Future<List<Map<String, Object?>>> allCards();
   Future<void> saveCard(String id, Map<String, Object?> value);

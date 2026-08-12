@@ -165,28 +165,54 @@ class SessionViewModel {
     }
   }
 
+  /// "Encerrar o round": stops the round before the five minutes run out. What
+  /// was answered is already saved card by card, so nothing is lost — the
+  /// screen just goes to the turn of the round.
+  Future<void> endRound() async {
+    if (await _updateSession(_sessionPolicy.endRound) == null) return;
+    _toRoundBreak();
+  }
+
+  /// "Encerrar a sessão": gives up on the rounds that were still to come and
+  /// goes straight to the scoreboard.
+  Future<void> endSession() async {
+    final updated = await _updateSession(_sessionPolicy.endSession);
+    if (updated == null) return;
+    _stopTimer();
+    _currentCard = null;
+    state.value = SessionState.scoreboard(updated);
+  }
+
   /// "Estender o round": same subject, another full round.
   Future<void> extendRound() async {
-    final current = _session;
-    if (current == null) return;
-    _session = _sessionPolicy.extendRound(current);
-    await _persist();
+    if (await _updateSession(_sessionPolicy.extendRound) == null) return;
     // The extension is a fresh pass over what is still due in the subject,
     // including the cards that went back to the 15-minute rung.
     _beginRound(resetAnswered: true);
   }
 
   Future<void> nextRound() async {
-    final current = _session;
-    if (current == null) return;
-    _session = _sessionPolicy.advanceRound(current);
-    await _persist();
-    if (_session!.finished) {
+    final updated = await _updateSession(_sessionPolicy.advanceRound);
+    if (updated == null) return;
+    if (updated.finished) {
       _stopTimer();
-      state.value = SessionState.scoreboard(_session!);
+      state.value = SessionState.scoreboard(updated);
       return;
     }
     _beginRound(resetAnswered: true);
+  }
+
+  /// Every round command is the same three steps: refuse to run without a
+  /// session, hand it to the policy, save what came back. Returns the new
+  /// session, or `null` when there was none to change.
+  Future<StudySession?> _updateSession(
+    StudySession Function(StudySession) change,
+  ) async {
+    final current = _session;
+    if (current == null) return null;
+    _session = change(current);
+    await _persist();
+    return _session;
   }
 
   /// Pausing simply stops ticking, which freezes the card stopwatch, the round
@@ -206,7 +232,18 @@ class SessionViewModel {
   }
 
   void _beginRound({required bool resetAnswered}) {
+    // A resumed session can carry a round that is already over — that is what
+    // ending one early leaves in the database. Serving a card here would put a
+    // clickable question on a 00:00 clock until the next tick noticed.
+    if (_sessionPolicy.isRoundOver(_session!)) {
+      _toRoundBreak();
+      return;
+    }
     if (resetAnswered) _answeredThisRound.clear();
+    // A round always starts running. Without this, ending a paused round early
+    // would carry the pause into the next one, whose clock would then sit
+    // frozen at 5:00 while the timer discards every tick.
+    paused.value = false;
     roundRemaining.value = _session!.remainingInRound;
     _startTimer();
     _showNextCard();
@@ -248,6 +285,9 @@ class SessionViewModel {
       current.currentSubject,
       current.nextSubject,
       _duePolicy.dueNow(_clock.now(), subject: current.currentSubject).length,
+      // The session carries it, so a reload still tells the two endings
+      // apart — the round that ran out and the one the user stopped.
+      endedEarly: current.roundEndedEarly,
     );
   }
 

@@ -10,8 +10,10 @@ class RoundBreakScreen extends StatelessWidget {
     required this.finished,
     required this.next,
     required this.remainingDueCards,
+    required this.endedEarly,
     required this.onContinue,
     required this.onExtend,
+    required this.onEndSession,
     super.key,
   });
 
@@ -21,8 +23,16 @@ class RoundBreakScreen extends StatelessWidget {
   final String? next;
 
   final int remainingDueCards;
+
+  /// The user stopped the round instead of letting the five minutes run out.
+  /// Only the wording changes — everything answered counts either way.
+  final bool endedEarly;
   final VoidCallback onContinue;
   final VoidCallback onExtend;
+
+  /// Gives up on the rounds still to come. Offered only when there are any —
+  /// on the last round, "Ver o resultado" already is the way out.
+  final VoidCallback onEndSession;
 
   @override
   Widget build(BuildContext context) {
@@ -32,7 +42,18 @@ class RoundBreakScreen extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text('Fim do round', style: theme.textTheme.headlineSmall),
+          Text(
+            endedEarly ? 'Round encerrado' : 'Fim do round',
+            style: theme.textTheme.headlineSmall,
+          ),
+          if (endedEarly) ...[
+            const SizedBox(height: 8),
+            Text(
+              'Tudo o que você respondeu foi salvo.',
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodyMedium,
+            ),
+          ],
           const SizedBox(height: 12),
           Text('Terminou: $finished', style: theme.textTheme.titleMedium),
           const SizedBox(height: 4),
@@ -60,6 +81,13 @@ class RoundBreakScreen extends StatelessWidget {
             onPressed: onContinue,
             child: Text(upcoming == null ? 'Ver o resultado' : 'Continuar'),
           ),
+          if (upcoming != null) ...[
+            const SizedBox(height: 8),
+            TextButton(
+              onPressed: onEndSession,
+              child: const Text('Encerrar a sessão'),
+            ),
+          ],
         ],
       ),
     );

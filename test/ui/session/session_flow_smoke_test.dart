@@ -184,4 +184,58 @@ void main() {
     }
     expect(tester.takeException(), isNull);
   });
+
+  // The stop button is one tap away from pause on a phone, so it asks first —
+  // and the answer has two branches that no unit test can see: cancelling has
+  // to leave the round exactly as it was, pause included.
+  group('stopping the round asks first', () {
+    Future<void> startRound(WidgetTester tester) async {
+      useScreenSize(tester);
+      await tester.pumpWidget(const MaterialApp(home: SessionView()));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Estado'));
+      await tester.pump();
+      await tester.tap(
+        find.widgetWithText(FilledButton, 'Começar · 1 assunto · 5 min'),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.byTooltip('Encerrar o round'));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('cancelling keeps the card and unfreezes the clock',
+        (tester) async {
+      await startRound(tester);
+
+      expect(find.text('Encerrar o round?'), findsOneWidget);
+      // The round is frozen while the question is on screen, so the seconds
+      // spent deciding never land on the card.
+      expect(find.byTooltip('Continuar'), findsOneWidget);
+
+      await tester.tap(find.text('Continuar estudando'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Pergunta due-1'), findsOneWidget);
+      expect(find.text('Round encerrado'), findsNothing);
+      // Back to running: the pause button offers to pause again.
+      expect(find.byTooltip('Pausar'), findsOneWidget);
+    });
+
+    testWidgets('confirming ends the round with what was answered',
+        (tester) async {
+      await startRound(tester);
+      await tester.tap(find.widgetWithText(FilledButton, 'Encerrar'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Round encerrado'), findsOneWidget);
+      expect(find.text('Tudo o que você respondeu foi salvo.'), findsOneWidget);
+      // One subject, so the round break is also the end of the session.
+      expect(find.text('Ver o resultado'), findsOneWidget);
+
+      await tester.tap(find.text('Ver o resultado'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Sessão concluída'), findsOneWidget);
+    });
+  });
 }

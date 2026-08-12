@@ -52,11 +52,16 @@ sealed class SessionState with _$SessionState {
 
   /// Silent turn of the round: which subject ended, which one starts, and how
   /// much is still due in the one that ended.
+  ///
+  /// [endedEarly] separates "the five minutes ran out" from "I stopped it".
+  /// It changes no rule — only the wording, so that the screen does not read
+  /// as a complaint to someone who has just chosen to stop.
   const factory SessionState.roundBreak(
     String finished,
     String? next,
-    int remainingDueCards,
-  ) = SessionRoundBreak;
+    int remainingDueCards, {
+    @Default(false) bool endedEarly,
+  }) = SessionRoundBreak;
 
   const factory SessionState.scoreboard(StudySession session) =
       SessionScoreboard;

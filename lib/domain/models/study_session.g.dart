@@ -38,6 +38,7 @@ _StudySession _$StudySessionFromJson(Map<String, dynamic> json) =>
           .map((e) => RoundScore.fromJson(e as Map<String, dynamic>))
           .toList(),
       finished: json['finished'] as bool,
+      roundEndedEarly: json['roundEndedEarly'] as bool? ?? false,
     );
 
 Map<String, dynamic> _$StudySessionToJson(_StudySession instance) =>
@@ -51,4 +52,5 @@ Map<String, dynamic> _$StudySessionToJson(_StudySession instance) =>
       ),
       'scores': instance.scores.map((e) => e.toJson()).toList(),
       'finished': instance.finished,
+      'roundEndedEarly': instance.roundEndedEarly,
     };

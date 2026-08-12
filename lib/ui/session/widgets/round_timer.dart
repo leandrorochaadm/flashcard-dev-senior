@@ -14,6 +14,7 @@ class RoundTimer extends StatelessWidget {
     required this.elapsedOnCard,
     required this.onTogglePause,
     required this.onToggleStopwatch,
+    required this.onEndRound,
     super.key,
   });
 
@@ -28,6 +29,9 @@ class RoundTimer extends StatelessWidget {
   final Duration elapsedOnCard;
   final VoidCallback onTogglePause;
   final VoidCallback onToggleStopwatch;
+
+  /// Gives up on the rest of the round; what was answered still counts.
+  final VoidCallback onEndRound;
 
   @override
   Widget build(BuildContext context) {
@@ -77,6 +81,11 @@ class RoundTimer extends StatelessWidget {
           onPressed: onTogglePause,
           tooltip: paused ? 'Continuar' : 'Pausar',
           icon: Icon(paused ? Icons.play_arrow : Icons.pause),
+        ),
+        IconButton(
+          onPressed: onEndRound,
+          tooltip: 'Encerrar o round',
+          icon: const Icon(Icons.stop_circle_outlined),
         ),
       ],
     );

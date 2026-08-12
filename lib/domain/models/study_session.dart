@@ -67,6 +67,11 @@ sealed class StudySession with _$StudySession {
     @DurationSecondsConverter() required Duration remainingInRound,
     required List<RoundScore> scores,
     required bool finished,
+
+    /// The current round was stopped by hand instead of running out of time.
+    /// It survives a reload so that the resumed session still says "Round
+    /// encerrado" — hence the schema bump to 2 and its migration.
+    @Default(false) bool roundEndedEarly,
   }) = _StudySession;
 
   factory StudySession.fromJson(Map<String, Object?> json) =>

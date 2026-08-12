@@ -5,6 +5,7 @@ import 'package:get_it/get_it.dart';
 import 'package:sembast/sembast.dart' show DatabaseFactory;
 
 import '../../data/database/app_database.dart';
+import '../../data/database/schema_migrations.dart';
 import '../../data/database/sembast_adapter.dart';
 import '../../data/repositories/backup_repository.dart';
 import '../../data/repositories/card_repository.dart';
@@ -55,7 +56,9 @@ Future<void> setupLocator({
     ..registerSingleton<ReviewLogRepository>(ReviewLogRepository(db))
     ..registerSingleton<SettingsRepository>(SettingsRepository(db))
     ..registerSingleton<SessionRepository>(SessionRepository(db))
-    ..registerSingleton<BackupRepository>(BackupRepository(db));
+    ..registerSingleton<BackupRepository>(
+      BackupRepository(db, appSchemaMigrations),
+    );
 
   // The in-memory caches have to be warm before any domain class reads them.
   await getIt<CardRepository>().load();

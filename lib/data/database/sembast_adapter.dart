@@ -36,7 +36,10 @@ final class SembastAdapter implements AppDatabase {
       path,
       version: AppDatabase.schemaVersion,
       onVersionChanged: (db, oldVersion, newVersion) async {
-        // Version 1 is the first schema; there is nothing to migrate yet.
+        // 1 → 2 added `roundEndedEarly` to the session. It has a default in
+        // the model, so a stored record without the key still reads back —
+        // nothing to rewrite here. The backup file does get an explicit step,
+        // in `schema_migrations.dart`: a dump is read outside the model.
         // Every future step runs here, in chain, one per version.
       },
     );

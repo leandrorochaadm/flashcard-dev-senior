@@ -68,10 +68,28 @@ final class SessionPolicy {
     return session.copyWith(
       currentRound: session.currentRound + 1,
       remainingInRound: roundDuration,
+      roundEndedEarly: false,
     );
   }
 
+  /// "Encerrar o round": the user gives up on the remaining time. The clock
+  /// goes to zero, which is the same end the timer would reach on its own — so
+  /// everything already answered stays answered and the turn of the round runs
+  /// exactly as usual.
+  StudySession endRound(StudySession session) =>
+      session.copyWith(remainingInRound: Duration.zero, roundEndedEarly: true);
+
+  /// "Encerrar a sessão": the remaining rounds are given up on. The session
+  /// closes with the score it has, which is the same ending the last round
+  /// would have produced.
+  StudySession endSession(StudySession session) => session.copyWith(
+        remainingInRound: Duration.zero,
+        finished: true,
+      );
+
   /// "Estender o round": keeps the subject and gives another full round.
-  StudySession extendRound(StudySession session) =>
-      session.copyWith(remainingInRound: roundDuration);
+  StudySession extendRound(StudySession session) => session.copyWith(
+        remainingInRound: roundDuration,
+        roundEndedEarly: false,
+      );
 }

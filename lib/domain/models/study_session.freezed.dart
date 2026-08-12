@@ -285,7 +285,10 @@ as int,
 /// @nodoc
 mixin _$StudySession {
 
- String get id; DateTime get startedAt; List<String> get subjects; int get currentRound;@DurationSecondsConverter() Duration get remainingInRound; List<RoundScore> get scores; bool get finished;
+ String get id; DateTime get startedAt; List<String> get subjects; int get currentRound;@DurationSecondsConverter() Duration get remainingInRound; List<RoundScore> get scores; bool get finished;/// The current round was stopped by hand instead of running out of time.
+/// It survives a reload so that the resumed session still says "Round
+/// encerrado" — hence the schema bump to 2 and its migration.
+ bool get roundEndedEarly;
 /// Create a copy of StudySession
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -298,16 +301,16 @@ $StudySessionCopyWith<StudySession> get copyWith => _$StudySessionCopyWithImpl<S
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is StudySession&&(identical(other.id, id) || other.id == id)&&(identical(other.startedAt, startedAt) || other.startedAt == startedAt)&&const DeepCollectionEquality().equals(other.subjects, subjects)&&(identical(other.currentRound, currentRound) || other.currentRound == currentRound)&&(identical(other.remainingInRound, remainingInRound) || other.remainingInRound == remainingInRound)&&const DeepCollectionEquality().equals(other.scores, scores)&&(identical(other.finished, finished) || other.finished == finished));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is StudySession&&(identical(other.id, id) || other.id == id)&&(identical(other.startedAt, startedAt) || other.startedAt == startedAt)&&const DeepCollectionEquality().equals(other.subjects, subjects)&&(identical(other.currentRound, currentRound) || other.currentRound == currentRound)&&(identical(other.remainingInRound, remainingInRound) || other.remainingInRound == remainingInRound)&&const DeepCollectionEquality().equals(other.scores, scores)&&(identical(other.finished, finished) || other.finished == finished)&&(identical(other.roundEndedEarly, roundEndedEarly) || other.roundEndedEarly == roundEndedEarly));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,startedAt,const DeepCollectionEquality().hash(subjects),currentRound,remainingInRound,const DeepCollectionEquality().hash(scores),finished);
+int get hashCode => Object.hash(runtimeType,id,startedAt,const DeepCollectionEquality().hash(subjects),currentRound,remainingInRound,const DeepCollectionEquality().hash(scores),finished,roundEndedEarly);
 
 @override
 String toString() {
-  return 'StudySession(id: $id, startedAt: $startedAt, subjects: $subjects, currentRound: $currentRound, remainingInRound: $remainingInRound, scores: $scores, finished: $finished)';
+  return 'StudySession(id: $id, startedAt: $startedAt, subjects: $subjects, currentRound: $currentRound, remainingInRound: $remainingInRound, scores: $scores, finished: $finished, roundEndedEarly: $roundEndedEarly)';
 }
 
 
@@ -318,7 +321,7 @@ abstract mixin class $StudySessionCopyWith<$Res>  {
   factory $StudySessionCopyWith(StudySession value, $Res Function(StudySession) _then) = _$StudySessionCopyWithImpl;
 @useResult
 $Res call({
- String id, DateTime startedAt, List<String> subjects, int currentRound,@DurationSecondsConverter() Duration remainingInRound, List<RoundScore> scores, bool finished
+ String id, DateTime startedAt, List<String> subjects, int currentRound,@DurationSecondsConverter() Duration remainingInRound, List<RoundScore> scores, bool finished, bool roundEndedEarly
 });
 
 
@@ -335,7 +338,7 @@ class _$StudySessionCopyWithImpl<$Res>
 
 /// Create a copy of StudySession
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? startedAt = null,Object? subjects = null,Object? currentRound = null,Object? remainingInRound = null,Object? scores = null,Object? finished = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? startedAt = null,Object? subjects = null,Object? currentRound = null,Object? remainingInRound = null,Object? scores = null,Object? finished = null,Object? roundEndedEarly = null,}) {
   return _then(StudySession(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,startedAt: null == startedAt ? _self.startedAt : startedAt // ignore: cast_nullable_to_non_nullable
@@ -344,6 +347,7 @@ as List<String>,currentRound: null == currentRound ? _self.currentRound : curren
 as int,remainingInRound: null == remainingInRound ? _self.remainingInRound : remainingInRound // ignore: cast_nullable_to_non_nullable
 as Duration,scores: null == scores ? _self.scores : scores // ignore: cast_nullable_to_non_nullable
 as List<RoundScore>,finished: null == finished ? _self.finished : finished // ignore: cast_nullable_to_non_nullable
+as bool,roundEndedEarly: null == roundEndedEarly ? _self.roundEndedEarly : roundEndedEarly // ignore: cast_nullable_to_non_nullable
 as bool,
   ));
 }
@@ -426,10 +430,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  DateTime startedAt,  List<String> subjects,  int currentRound, @DurationSecondsConverter()  Duration remainingInRound,  List<RoundScore> scores,  bool finished)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  DateTime startedAt,  List<String> subjects,  int currentRound, @DurationSecondsConverter()  Duration remainingInRound,  List<RoundScore> scores,  bool finished,  bool roundEndedEarly)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _StudySession() when $default != null:
-return $default(_that.id,_that.startedAt,_that.subjects,_that.currentRound,_that.remainingInRound,_that.scores,_that.finished);case _:
+return $default(_that.id,_that.startedAt,_that.subjects,_that.currentRound,_that.remainingInRound,_that.scores,_that.finished,_that.roundEndedEarly);case _:
   return orElse();
 
 }
@@ -447,10 +451,10 @@ return $default(_that.id,_that.startedAt,_that.subjects,_that.currentRound,_that
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  DateTime startedAt,  List<String> subjects,  int currentRound, @DurationSecondsConverter()  Duration remainingInRound,  List<RoundScore> scores,  bool finished)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  DateTime startedAt,  List<String> subjects,  int currentRound, @DurationSecondsConverter()  Duration remainingInRound,  List<RoundScore> scores,  bool finished,  bool roundEndedEarly)  $default,) {final _that = this;
 switch (_that) {
 case _StudySession():
-return $default(_that.id,_that.startedAt,_that.subjects,_that.currentRound,_that.remainingInRound,_that.scores,_that.finished);}
+return $default(_that.id,_that.startedAt,_that.subjects,_that.currentRound,_that.remainingInRound,_that.scores,_that.finished,_that.roundEndedEarly);}
 }
 /// A variant of `when` that fallback to returning `null`
 ///
@@ -464,10 +468,10 @@ return $default(_that.id,_that.startedAt,_that.subjects,_that.currentRound,_that
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  DateTime startedAt,  List<String> subjects,  int currentRound, @DurationSecondsConverter()  Duration remainingInRound,  List<RoundScore> scores,  bool finished)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  DateTime startedAt,  List<String> subjects,  int currentRound, @DurationSecondsConverter()  Duration remainingInRound,  List<RoundScore> scores,  bool finished,  bool roundEndedEarly)?  $default,) {final _that = this;
 switch (_that) {
 case _StudySession() when $default != null:
-return $default(_that.id,_that.startedAt,_that.subjects,_that.currentRound,_that.remainingInRound,_that.scores,_that.finished);case _:
+return $default(_that.id,_that.startedAt,_that.subjects,_that.currentRound,_that.remainingInRound,_that.scores,_that.finished,_that.roundEndedEarly);case _:
   return null;
 
 }
@@ -479,7 +483,7 @@ return $default(_that.id,_that.startedAt,_that.subjects,_that.currentRound,_that
 @JsonSerializable()
 
 class _StudySession extends StudySession {
-  const _StudySession({required this.id, required this.startedAt, required  List<String> subjects, required this.currentRound, @DurationSecondsConverter() required this.remainingInRound, required  List<RoundScore> scores, required this.finished}): _subjects = subjects,_scores = scores,super._();
+  const _StudySession({required this.id, required this.startedAt, required  List<String> subjects, required this.currentRound, @DurationSecondsConverter() required this.remainingInRound, required  List<RoundScore> scores, required this.finished, this.roundEndedEarly = false}): _subjects = subjects,_scores = scores,super._();
   factory _StudySession.fromJson(Map<String, dynamic> json) => _$StudySessionFromJson(json);
 
 @override final  String id;
@@ -501,6 +505,10 @@ class _StudySession extends StudySession {
 }
 
 @override final  bool finished;
+/// The current round was stopped by hand instead of running out of time.
+/// It survives a reload so that the resumed session still says "Round
+/// encerrado" — hence the schema bump to 2 and its migration.
+@override@JsonKey() final  bool roundEndedEarly;
 
 /// Create a copy of StudySession
 /// with the given fields replaced by the non-null parameter values.
@@ -515,16 +523,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _StudySession&&(identical(other.id, id) || other.id == id)&&(identical(other.startedAt, startedAt) || other.startedAt == startedAt)&&const DeepCollectionEquality().equals(other._subjects, _subjects)&&(identical(other.currentRound, currentRound) || other.currentRound == currentRound)&&(identical(other.remainingInRound, remainingInRound) || other.remainingInRound == remainingInRound)&&const DeepCollectionEquality().equals(other._scores, _scores)&&(identical(other.finished, finished) || other.finished == finished));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _StudySession&&(identical(other.id, id) || other.id == id)&&(identical(other.startedAt, startedAt) || other.startedAt == startedAt)&&const DeepCollectionEquality().equals(other._subjects, _subjects)&&(identical(other.currentRound, currentRound) || other.currentRound == currentRound)&&(identical(other.remainingInRound, remainingInRound) || other.remainingInRound == remainingInRound)&&const DeepCollectionEquality().equals(other._scores, _scores)&&(identical(other.finished, finished) || other.finished == finished)&&(identical(other.roundEndedEarly, roundEndedEarly) || other.roundEndedEarly == roundEndedEarly));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,startedAt,const DeepCollectionEquality().hash(_subjects),currentRound,remainingInRound,const DeepCollectionEquality().hash(_scores),finished);
+int get hashCode => Object.hash(runtimeType,id,startedAt,const DeepCollectionEquality().hash(_subjects),currentRound,remainingInRound,const DeepCollectionEquality().hash(_scores),finished,roundEndedEarly);
 
 @override
 String toString() {
-  return 'StudySession(id: $id, startedAt: $startedAt, subjects: $subjects, currentRound: $currentRound, remainingInRound: $remainingInRound, scores: $scores, finished: $finished)';
+  return 'StudySession(id: $id, startedAt: $startedAt, subjects: $subjects, currentRound: $currentRound, remainingInRound: $remainingInRound, scores: $scores, finished: $finished, roundEndedEarly: $roundEndedEarly)';
 }
 
 
@@ -535,7 +543,7 @@ abstract mixin class _$StudySessionCopyWith<$Res> implements $StudySessionCopyWi
   factory _$StudySessionCopyWith(_StudySession value, $Res Function(_StudySession) _then) = __$StudySessionCopyWithImpl;
 @override @useResult
 $Res call({
- String id, DateTime startedAt, List<String> subjects, int currentRound,@DurationSecondsConverter() Duration remainingInRound, List<RoundScore> scores, bool finished
+ String id, DateTime startedAt, List<String> subjects, int currentRound,@DurationSecondsConverter() Duration remainingInRound, List<RoundScore> scores, bool finished, bool roundEndedEarly
 });
 
 
@@ -552,7 +560,7 @@ class __$StudySessionCopyWithImpl<$Res>
 
 /// Create a copy of StudySession
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? startedAt = null,Object? subjects = null,Object? currentRound = null,Object? remainingInRound = null,Object? scores = null,Object? finished = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? startedAt = null,Object? subjects = null,Object? currentRound = null,Object? remainingInRound = null,Object? scores = null,Object? finished = null,Object? roundEndedEarly = null,}) {
   return _then(_StudySession(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,startedAt: null == startedAt ? _self.startedAt : startedAt // ignore: cast_nullable_to_non_nullable
@@ -561,6 +569,7 @@ as List<String>,currentRound: null == currentRound ? _self.currentRound : curren
 as int,remainingInRound: null == remainingInRound ? _self.remainingInRound : remainingInRound // ignore: cast_nullable_to_non_nullable
 as Duration,scores: null == scores ? _self._scores : scores // ignore: cast_nullable_to_non_nullable
 as List<RoundScore>,finished: null == finished ? _self.finished : finished // ignore: cast_nullable_to_non_nullable
+as bool,roundEndedEarly: null == roundEndedEarly ? _self.roundEndedEarly : roundEndedEarly // ignore: cast_nullable_to_non_nullable
 as bool,
   ));
 }
