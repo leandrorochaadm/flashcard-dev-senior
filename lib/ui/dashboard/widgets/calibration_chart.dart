@@ -51,7 +51,7 @@ class CalibrationChart extends StatelessWidget {
               const Text('Ainda não há dias de estudo para comparar.')
             else
               SizedBox(
-                height: 200,
+                height: 220,
                 width: double.infinity,
                 child: CustomPaint(
                   painter: _CalibrationPainter(
@@ -61,6 +61,11 @@ class CalibrationChart extends StatelessWidget {
                     actualColor: scheme.tertiary,
                     previousColor: scheme.outline,
                     gridColor: scheme.outlineVariant,
+                    labelStyle:
+                        theme.textTheme.labelSmall?.copyWith(
+                          color: scheme.onSurfaceVariant,
+                        ) ??
+                        TextStyle(fontSize: 11, color: scheme.onSurfaceVariant),
                   ),
                 ),
               ),
@@ -127,6 +132,8 @@ class _Legend extends StatelessWidget {
   }
 }
 
+enum _Align { rightMiddle, centerTop, centerBottom }
+
 class _CalibrationPainter extends CustomPainter {
   _CalibrationPainter({
     required this.series,
@@ -135,6 +142,7 @@ class _CalibrationPainter extends CustomPainter {
     required this.actualColor,
     required this.previousColor,
     required this.gridColor,
+    required this.labelStyle,
   });
 
   final List<CalibrationPoint> series;
@@ -143,30 +151,145 @@ class _CalibrationPainter extends CustomPainter {
   final Color actualColor;
   final Color previousColor;
   final Color gridColor;
+  final TextStyle labelStyle;
+
+  /// Set on every paint; the labels of the first and last day are centred on
+  /// points that sit on the edges, so they need the full width to clamp against.
+  double _width = 0;
 
   @override
   void paint(Canvas canvas, Size size) {
+    _width = size.width;
+    // The plot area leaves room for the axis labels: the vertical rates on the
+    // left, the days underneath, and one line above the plot for the value
+    // printed over the highest point.
+    const gutter = 38.0;
+    const bottom = 20.0;
+    const top = 12.0;
+    final plot = Rect.fromLTRB(gutter, top, size.width, size.height - bottom);
+    if (plot.width <= 0 || plot.height <= 0) return;
+
     final grid = Paint()
       ..color = gridColor
       ..strokeWidth = 1;
     // The vertical axis is a rate: always the full 0..1, so two charts drawn
     // on different days stay comparable.
     for (var i = 0; i <= 4; i++) {
-      final y = size.height * i / 4;
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), grid);
+      final y = plot.top + plot.height * i / 4;
+      canvas.drawLine(Offset(plot.left, y), Offset(plot.right, y), grid);
+      _paintText(
+        canvas,
+        '${(100 - i * 25)}%',
+        Offset(gutter - 6, y),
+        align: _Align.rightMiddle,
+      );
     }
 
-    _drawLine(canvas, size, series, (p) => p.predicted, predictedColor, 2.5);
-    _drawLine(canvas, size, series, (p) => p.actual, actualColor, 2.5);
+    final stride = _labelStride(plot.width);
+    for (var i = 0; i < series.length; i++) {
+      if (i % stride != 0 && i != series.length - 1) continue;
+      _paintText(
+        canvas,
+        formatDate(series[i].day),
+        Offset(_x(plot, i), plot.bottom + 4),
+        align: _Align.centerTop,
+      );
+    }
+
     final previous = previousSeries;
     if (previous != null) {
-      _drawLine(canvas, size, previous, (p) => p.predicted, previousColor, 1.5);
+      _drawLine(canvas, plot, previous, (p) => p.predicted, previousColor, 1.5);
     }
+    _drawLine(canvas, plot, series, (p) => p.predicted, predictedColor, 2.5);
+    _drawLine(canvas, plot, series, (p) => p.actual, actualColor, 2.5);
+
+    for (var i = 0; i < series.length; i++) {
+      if (i % stride != 0 && i != series.length - 1) continue;
+      final point = series[i];
+      // Whichever value is on top gets its label above the line, so the two
+      // never land on the same pixels.
+      final predictedOnTop = point.predicted >= point.actual;
+      _paintValue(
+        canvas,
+        plot,
+        i,
+        point.predicted,
+        predictedColor,
+        above: predictedOnTop,
+      );
+      _paintValue(
+        canvas,
+        plot,
+        i,
+        point.actual,
+        actualColor,
+        above: !predictedOnTop,
+      );
+    }
+  }
+
+  /// How many days to skip between labels so they do not overlap: each label is
+  /// about 32 px wide ("12/08" plus breathing room).
+  int _labelStride(double width) {
+    if (series.length < 2) return 1;
+    final fits = (width / 44).floor().clamp(1, series.length);
+    return (series.length / fits).ceil();
+  }
+
+  double _x(Rect plot, int index) => series.length == 1
+      ? plot.center.dx
+      : plot.left + plot.width * index / (series.length - 1);
+
+  void _paintValue(
+    Canvas canvas,
+    Rect plot,
+    int index,
+    double value,
+    Color color, {
+    required bool above,
+  }) {
+    final y = plot.top + plot.height * (1 - value.clamp(0.0, 1.0));
+    _paintText(
+      canvas,
+      '${(value * 100).round()}%',
+      Offset(_x(plot, index), above ? y - 6 : y + 6),
+      align: above ? _Align.centerBottom : _Align.centerTop,
+      color: color,
+    );
+  }
+
+  void _paintText(
+    Canvas canvas,
+    String text,
+    Offset anchor, {
+    required _Align align,
+    Color? color,
+  }) {
+    final painter = TextPainter(
+      text: TextSpan(
+        text: text,
+        style: color == null ? labelStyle : labelStyle.copyWith(color: color),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    final offset = switch (align) {
+      _Align.rightMiddle => Offset(
+        anchor.dx - painter.width,
+        anchor.dy - painter.height / 2,
+      ),
+      _Align.centerTop => Offset(anchor.dx - painter.width / 2, anchor.dy),
+      _Align.centerBottom => Offset(
+        anchor.dx - painter.width / 2,
+        anchor.dy - painter.height,
+      ),
+    };
+    final maxLeft = (_width - painter.width).clamp(0.0, double.infinity);
+    painter.paint(canvas, Offset(offset.dx.clamp(0.0, maxLeft), offset.dy));
   }
 
   void _drawLine(
     Canvas canvas,
-    Size size,
+    Rect plot,
     List<CalibrationPoint> points,
     double Function(CalibrationPoint) value,
     Color color,
@@ -182,9 +305,9 @@ class _CalibrationPainter extends CustomPainter {
     final path = Path();
     for (var i = 0; i < points.length; i++) {
       final x = points.length == 1
-          ? size.width / 2
-          : size.width * i / (points.length - 1);
-      final y = size.height * (1 - value(points[i]).clamp(0.0, 1.0));
+          ? plot.center.dx
+          : plot.left + plot.width * i / (points.length - 1);
+      final y = plot.top + plot.height * (1 - value(points[i]).clamp(0.0, 1.0));
       if (i == 0) {
         path.moveTo(x, y);
       } else {
