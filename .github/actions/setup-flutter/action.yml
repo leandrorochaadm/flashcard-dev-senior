@@ -1,0 +1,24 @@
+name: Setup Flutter
+description: >-
+  Installs the pinned Flutter SDK and fetches the pub dependencies — the steps
+  every job here repeats after checking out. The checkout itself stays in the
+  job: a local composite action only becomes reachable after the repo is on
+  disk, so it cannot check the repo out.
+
+inputs:
+  flutter-version:
+    description: Flutter SDK version, passed by the caller from env.FLUTTER_VERSION.
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - uses: subosito/flutter-action@v2
+      with:
+        flutter-version: ${{ inputs.flutter-version }}
+        channel: stable
+        cache: true
+
+    - name: Install dependencies
+      shell: bash
+      run: flutter pub get

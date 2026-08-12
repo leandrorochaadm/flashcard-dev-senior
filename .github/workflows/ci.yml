@@ -3,24 +3,38 @@ name: CI
 on:
   push:
     branches: ["**"]
+  # Only PRs targeting main. Branches of this repo already run on push, and
+  # matching "**" here would run the whole CI twice for the same commit.
   pull_request:
-    branches: ["**"]
+    branches: [main]
   workflow_dispatch:
+
+# A newer push supersedes the running CI for the same branch — except on main,
+# where an in-flight run may be deploying and must finish.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+# No job writes to the repository: the deploy authenticates with Cloudflare's
+# own token. Declared here so it does not depend on the repo-wide default,
+# which is changed from a settings screen, outside this file.
+permissions:
+  contents: read
+
+env:
+  # Declared once: a deploy compiled with a different Flutter than the one that
+  # ran the tests would still report green.
+  FLUTTER_VERSION: 3.44.0
 
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: subosito/flutter-action@v2
+      - uses: ./.github/actions/setup-flutter
         with:
-          flutter-version: 3.44.0
-          channel: stable
-          cache: true
-
-      - name: Install dependencies
-        run: flutter pub get
+          flutter-version: ${{ env.FLUTTER_VERSION }}
 
       - name: Test
         # Excludes tests tagged "chrome-only": they build the app's widget
@@ -32,16 +46,11 @@ jobs:
   widget-tests-chrome:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: subosito/flutter-action@v2
+      - uses: ./.github/actions/setup-flutter
         with:
-          flutter-version: 3.44.0
-          channel: stable
-          cache: true
-
-      - name: Install dependencies
-        run: flutter pub get
+          flutter-version: ${{ env.FLUTTER_VERSION }}
 
       - name: Test (chrome platform)
         # Covers tests tagged "chrome-only": widget tests that build the real
@@ -52,29 +61,33 @@ jobs:
 
   deploy:
     needs: [test, widget-tests-chrome]
-    if: |
-      github.ref == 'refs/heads/main' &&
-      (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    # A pull_request event never carries this ref (it runs on refs/pull/N/merge),
+    # so the ref alone already narrows this down to push and workflow_dispatch.
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     concurrency:
       group: deploy-prod
       cancel-in-progress: false
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: subosito/flutter-action@v2
+      - uses: ./.github/actions/setup-flutter
         with:
-          flutter-version: 3.44.0
-          channel: stable
-          cache: true
+          flutter-version: ${{ env.FLUTTER_VERSION }}
 
-      - name: Install dependencies
-        run: flutter pub get
+      # Before the build: a broken environment should fail in seconds, not
+      # after the release compile, which is the longest step of this job.
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
 
       - name: Build web release
         run: tool/build_web.sh
 
       - name: Deploy to Cloudflare Workers
-        run: npx wrangler deploy
+        # Pinned to the major: there is no package.json here, so a bare `npx
+        # wrangler` would pull whatever is latest on the day of the deploy —
+        # and wrangler has changed `wrangler.toml` keys across majors before.
+        run: npx --yes wrangler@4 deploy
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
