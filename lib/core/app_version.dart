@@ -21,7 +21,7 @@ abstract final class AppVersion {
   /// `version:` of pubspec.yaml, after the `+`.
   static const build = String.fromEnvironment(
     'BUILD_NUMBER',
-    defaultValue: '3',
+    defaultValue: '4',
   );
 
   /// Short hash of the commit the bundle was built from. Empty when the app
