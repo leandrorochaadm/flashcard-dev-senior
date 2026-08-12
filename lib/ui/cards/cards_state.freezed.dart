@@ -123,11 +123,11 @@ return error(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  loading,TResult Function( List<Card> cards,  List<String> subjects,  String? selectedSubject,  int problemCount,  DateTime targetDate,  DateTime now)?  ready,TResult Function( String message)?  error,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  loading,TResult Function( List<Card> cards,  List<String> subjects,  Map<String, int> countsBySubject,  String? selectedSubject,  int problemCount,  int totalCount,  int pendingCount,  DateTime targetDate,  DateTime now)?  ready,TResult Function( String message)?  error,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case CardsLoading() when loading != null:
 return loading();case CardsReady() when ready != null:
-return ready(_that.cards,_that.subjects,_that.selectedSubject,_that.problemCount,_that.targetDate,_that.now);case CardsError() when error != null:
+return ready(_that.cards,_that.subjects,_that.countsBySubject,_that.selectedSubject,_that.problemCount,_that.totalCount,_that.pendingCount,_that.targetDate,_that.now);case CardsError() when error != null:
 return error(_that.message);case _:
   return orElse();
 
@@ -146,11 +146,11 @@ return error(_that.message);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  loading,required TResult Function( List<Card> cards,  List<String> subjects,  String? selectedSubject,  int problemCount,  DateTime targetDate,  DateTime now)  ready,required TResult Function( String message)  error,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  loading,required TResult Function( List<Card> cards,  List<String> subjects,  Map<String, int> countsBySubject,  String? selectedSubject,  int problemCount,  int totalCount,  int pendingCount,  DateTime targetDate,  DateTime now)  ready,required TResult Function( String message)  error,}) {final _that = this;
 switch (_that) {
 case CardsLoading():
 return loading();case CardsReady():
-return ready(_that.cards,_that.subjects,_that.selectedSubject,_that.problemCount,_that.targetDate,_that.now);case CardsError():
+return ready(_that.cards,_that.subjects,_that.countsBySubject,_that.selectedSubject,_that.problemCount,_that.totalCount,_that.pendingCount,_that.targetDate,_that.now);case CardsError():
 return error(_that.message);}
 }
 /// A variant of `when` that fallback to returning `null`
@@ -165,11 +165,11 @@ return error(_that.message);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  loading,TResult? Function( List<Card> cards,  List<String> subjects,  String? selectedSubject,  int problemCount,  DateTime targetDate,  DateTime now)?  ready,TResult? Function( String message)?  error,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  loading,TResult? Function( List<Card> cards,  List<String> subjects,  Map<String, int> countsBySubject,  String? selectedSubject,  int problemCount,  int totalCount,  int pendingCount,  DateTime targetDate,  DateTime now)?  ready,TResult? Function( String message)?  error,}) {final _that = this;
 switch (_that) {
 case CardsLoading() when loading != null:
 return loading();case CardsReady() when ready != null:
-return ready(_that.cards,_that.subjects,_that.selectedSubject,_that.problemCount,_that.targetDate,_that.now);case CardsError() when error != null:
+return ready(_that.cards,_that.subjects,_that.countsBySubject,_that.selectedSubject,_that.problemCount,_that.totalCount,_that.pendingCount,_that.targetDate,_that.now);case CardsError() when error != null:
 return error(_that.message);case _:
   return null;
 
@@ -214,7 +214,7 @@ String toString() {
 
 
 class CardsReady implements CardsState {
-  const CardsReady({required  List<Card> cards, required  List<String> subjects, required this.selectedSubject, required this.problemCount, required this.targetDate, required this.now}): _cards = cards,_subjects = subjects;
+  const CardsReady({required  List<Card> cards, required  List<String> subjects, required  Map<String, int> countsBySubject, required this.selectedSubject, required this.problemCount, required this.totalCount, required this.pendingCount, required this.targetDate, required this.now}): _cards = cards,_subjects = subjects,_countsBySubject = countsBySubject;
   
 
  final  List<Card> _cards;
@@ -231,8 +231,17 @@ class CardsReady implements CardsState {
   return EqualUnmodifiableListView(_subjects);
 }
 
+ final  Map<String, int> _countsBySubject;
+ Map<String, int> get countsBySubject {
+  if (_countsBySubject is EqualUnmodifiableMapView) return _countsBySubject;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableMapView(_countsBySubject);
+}
+
  final  String? selectedSubject;
  final  int problemCount;
+ final  int totalCount;
+ final  int pendingCount;
  final  DateTime targetDate;
  final  DateTime now;
 
@@ -246,16 +255,16 @@ $CardsReadyCopyWith<CardsReady> get copyWith => _$CardsReadyCopyWithImpl<CardsRe
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is CardsReady&&const DeepCollectionEquality().equals(other._cards, _cards)&&const DeepCollectionEquality().equals(other._subjects, _subjects)&&(identical(other.selectedSubject, selectedSubject) || other.selectedSubject == selectedSubject)&&(identical(other.problemCount, problemCount) || other.problemCount == problemCount)&&(identical(other.targetDate, targetDate) || other.targetDate == targetDate)&&(identical(other.now, now) || other.now == now));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is CardsReady&&const DeepCollectionEquality().equals(other._cards, _cards)&&const DeepCollectionEquality().equals(other._subjects, _subjects)&&const DeepCollectionEquality().equals(other._countsBySubject, _countsBySubject)&&(identical(other.selectedSubject, selectedSubject) || other.selectedSubject == selectedSubject)&&(identical(other.problemCount, problemCount) || other.problemCount == problemCount)&&(identical(other.totalCount, totalCount) || other.totalCount == totalCount)&&(identical(other.pendingCount, pendingCount) || other.pendingCount == pendingCount)&&(identical(other.targetDate, targetDate) || other.targetDate == targetDate)&&(identical(other.now, now) || other.now == now));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_cards),const DeepCollectionEquality().hash(_subjects),selectedSubject,problemCount,targetDate,now);
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_cards),const DeepCollectionEquality().hash(_subjects),const DeepCollectionEquality().hash(_countsBySubject),selectedSubject,problemCount,totalCount,pendingCount,targetDate,now);
 
 @override
 String toString() {
-  return 'CardsState.ready(cards: $cards, subjects: $subjects, selectedSubject: $selectedSubject, problemCount: $problemCount, targetDate: $targetDate, now: $now)';
+  return 'CardsState.ready(cards: $cards, subjects: $subjects, countsBySubject: $countsBySubject, selectedSubject: $selectedSubject, problemCount: $problemCount, totalCount: $totalCount, pendingCount: $pendingCount, targetDate: $targetDate, now: $now)';
 }
 
 
@@ -266,7 +275,7 @@ abstract mixin class $CardsReadyCopyWith<$Res> implements $CardsStateCopyWith<$R
   factory $CardsReadyCopyWith(CardsReady value, $Res Function(CardsReady) _then) = _$CardsReadyCopyWithImpl;
 @useResult
 $Res call({
- List<Card> cards, List<String> subjects, String? selectedSubject, int problemCount, DateTime targetDate, DateTime now
+ List<Card> cards, List<String> subjects, Map<String, int> countsBySubject, String? selectedSubject, int problemCount, int totalCount, int pendingCount, DateTime targetDate, DateTime now
 });
 
 
@@ -283,12 +292,15 @@ class _$CardsReadyCopyWithImpl<$Res>
 
 /// Create a copy of CardsState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') $Res call({Object? cards = null,Object? subjects = null,Object? selectedSubject = freezed,Object? problemCount = null,Object? targetDate = null,Object? now = null,}) {
+@pragma('vm:prefer-inline') $Res call({Object? cards = null,Object? subjects = null,Object? countsBySubject = null,Object? selectedSubject = freezed,Object? problemCount = null,Object? totalCount = null,Object? pendingCount = null,Object? targetDate = null,Object? now = null,}) {
   return _then(CardsReady(
 cards: null == cards ? _self._cards : cards // ignore: cast_nullable_to_non_nullable
 as List<Card>,subjects: null == subjects ? _self._subjects : subjects // ignore: cast_nullable_to_non_nullable
-as List<String>,selectedSubject: freezed == selectedSubject ? _self.selectedSubject : selectedSubject // ignore: cast_nullable_to_non_nullable
+as List<String>,countsBySubject: null == countsBySubject ? _self._countsBySubject : countsBySubject // ignore: cast_nullable_to_non_nullable
+as Map<String, int>,selectedSubject: freezed == selectedSubject ? _self.selectedSubject : selectedSubject // ignore: cast_nullable_to_non_nullable
 as String?,problemCount: null == problemCount ? _self.problemCount : problemCount // ignore: cast_nullable_to_non_nullable
+as int,totalCount: null == totalCount ? _self.totalCount : totalCount // ignore: cast_nullable_to_non_nullable
+as int,pendingCount: null == pendingCount ? _self.pendingCount : pendingCount // ignore: cast_nullable_to_non_nullable
 as int,targetDate: null == targetDate ? _self.targetDate : targetDate // ignore: cast_nullable_to_non_nullable
 as DateTime,now: null == now ? _self.now : now // ignore: cast_nullable_to_non_nullable
 as DateTime,

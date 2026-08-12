@@ -143,6 +143,87 @@ void main() {
     });
   });
 
+  // Decision of 12/08/2026: the ramp became optional. The import screen offers
+  // the release as a switch, the collection screen as a button, and both land
+  // here — the only class allowed to write `introducedAt`.
+  group('releasing outside the daily ramp', () {
+    test('pendingCount counts what is held back, not the whole collection', () {
+      final built = build(
+        pending: 3,
+        released: [
+          for (var i = 0; i < 2; i++)
+            newCard('r$i',
+                importedAt: firstOpening, introducedAt: firstOpening),
+        ],
+      );
+
+      expect(built.policy.pendingCount, 3);
+      expect(built.collection.all, hasLength(5));
+    });
+
+    test('releasedNow stamps introducedAt and dueAt with the same instant', () {
+      final built = build(pending: 1);
+
+      final released =
+          built.policy.releasedNow(built.collection.all.single, firstOpening);
+
+      expect(released.introducedAt, firstOpening);
+      expect(released.isReleased, isTrue);
+      expect(released.dueAt, firstOpening,
+          reason: 'a released card is due at once');
+    });
+
+    test('releasedNow leaves an already released card exactly as it was', () {
+      // Re-stamping would rewrite the day the card entered the study and pull
+      // a real schedule back to now.
+      final dueAt = firstOpening.add(const Duration(days: 6));
+      final studied = newCard(
+        'r0',
+        importedAt: firstOpening,
+        introducedAt: firstOpening,
+        dueAt: dueAt,
+        stability: 9,
+      );
+      final built = build(pending: 0, released: [studied]);
+
+      final released = built.policy
+          .releasedNow(studied, firstOpening.add(const Duration(days: 3)));
+
+      expect(released.introducedAt, firstOpening);
+      expect(released.dueAt, dueAt);
+    });
+
+    test('releaseAllPending reaches every held-back card and nothing else', () {
+      final alreadyOut = newCard(
+        'r0',
+        importedAt: firstOpening,
+        introducedAt: firstOpening,
+        dueAt: firstOpening.add(const Duration(days: 6)),
+      );
+      final built = build(pending: 3, released: [alreadyOut]);
+      final now = firstOpening.add(const Duration(days: 2));
+
+      final released = built.policy.releaseAllPending(now);
+
+      expect(released.map((card) => card.id), ['p0', 'p1', 'p2']);
+      expect(released.every((card) => card.introducedAt == now), isTrue);
+      expect(released.every((card) => card.dueAt == now), isTrue);
+    });
+
+    test('releaseAllPending on a collection with nothing pending releases '
+        'nothing', () {
+      final built = build(
+        pending: 0,
+        released: [
+          newCard('r0', importedAt: firstOpening, introducedAt: firstOpening),
+        ],
+      );
+
+      expect(built.policy.releaseAllPending(firstOpening), isEmpty);
+      expect(built.policy.pendingCount, 0);
+    });
+  });
+
   group('releasing once a day', () {
     test('the batch goes out once a day, however many times it is asked for',
         () {
@@ -180,6 +261,21 @@ void main() {
       expect(release.cards.every((card) => card.introducedAt == firstOpening),
           isTrue);
       expect(release.cards.every((card) => card.isReleased), isTrue);
+    });
+
+    test('a mass release does not make the day batch go out twice', () {
+      // The release outside the ramp writes no journal entry, so nothing stops
+      // `releaseToday` from being called on the same day — what stops it is
+      // there being nothing left pending.
+      final built = build(pending: 10);
+      for (final card in built.policy.releaseAllPending(firstOpening)) {
+        built.collection.save(card);
+      }
+
+      final release = built.policy.releaseToday(firstOpening);
+
+      expect(release.cards, isEmpty);
+      expect(release.reason, IntakeReason.nothingPending);
     });
 
     test('a new day releases the next batch', () {

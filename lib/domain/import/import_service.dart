@@ -12,10 +12,38 @@ import 'import_preview.dart';
 /// first review dates — that is how the spread of H5 is checked on the import
 /// screen instead of weeks later.
 final class ImportOutcome {
-  const ImportOutcome({required this.created, required this.updated});
+  const ImportOutcome({
+    required this.created,
+    required this.updated,
+    this.removed = const [],
+    this.mirrorHeldBack = false,
+    this.releasedOnImport = false,
+  });
 
   final List<Card> created;
   final List<Card> updated;
+
+  /// Only filled when the import runs as a mirror: the cards already in the
+  /// collection that the file no longer mentions. They are listed in the
+  /// preview before anything is written, because erasing them takes their
+  /// review history along.
+  final List<Card> removed;
+
+  /// True when the mirror was asked for and refused: the text has blocks the
+  /// parser could not read, and a card whose block has a typo is
+  /// indistinguishable from a card the file dropped on purpose. Removing under
+  /// that doubt erases study history over a missing `assunto:` line, so the
+  /// mirror stands down and the screen asks for the blocks to be fixed first.
+  final bool mirrorHeldBack;
+
+  /// Whether confirming this import releases the new cards at once, instead of
+  /// letting them enter the ~20-a-day ramp (decision of 12/08/2026).
+  ///
+  /// An intention, not a stamp: the cards in [created] are still held back. The
+  /// stamping happens once, when the import is confirmed, so the day the card
+  /// enters the study is the day it was saved — a preview left open across
+  /// midnight would otherwise record yesterday.
+  final bool releasedOnImport;
 
   int get total => created.length + updated.length;
 }
@@ -32,7 +60,25 @@ final class ImportService {
   final CollectionView _collection;
   final ContentIntakePolicy _intake;
 
-  ImportOutcome resolve(ImportPreview preview, DateTime now) {
+  /// With [mirror] on, the file becomes the whole truth about the collection:
+  /// whatever it does not mention lands in [ImportOutcome.removed]. Off — the
+  /// default — an import only adds and updates, which is what H3 describes.
+  ///
+  /// A text with unreadable blocks holds the mirror back entirely — see
+  /// [ImportOutcome.mirrorHeldBack]. Adding and updating still happen.
+  ///
+  /// [releaseNow] only travels: it comes out in
+  /// [ImportOutcome.releasedOnImport] and is stamped by whoever confirms the
+  /// import. The cards created here are held back either way, and the cards in
+  /// `updated` are never reached by it — they already exist and may carry
+  /// history, so a held-back one stays held back until the daily ramp or the
+  /// collection screen releases it.
+  ImportOutcome resolve(
+    ImportPreview preview,
+    DateTime now, {
+    bool mirror = false,
+    bool releaseNow = false,
+  }) {
     final created = <Card>[];
     final updated = <Card>[];
 
@@ -52,7 +98,20 @@ final class ImportService {
         );
       }
     }
-    return ImportOutcome(created: created, updated: updated);
+    final kept = {for (final card in updated) card.id};
+    final heldBack = mirror && preview.invalid.isNotEmpty;
+    return ImportOutcome(
+      created: created,
+      updated: updated,
+      removed: mirror && !heldBack
+          ? [
+              for (final card in _collection.all)
+                if (!kept.contains(card.id)) card,
+            ]
+          : const [],
+      mirrorHeldBack: heldBack,
+      releasedOnImport: releaseNow,
+    );
   }
 
   Card? _match(ParsedCard parsed) {

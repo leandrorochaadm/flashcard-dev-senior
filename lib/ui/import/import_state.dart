@@ -26,9 +26,14 @@ sealed class ImportState with _$ImportState {
 
   const factory ImportState.importing() = ImportImporting;
 
+  /// [released] says the new cards went straight into today's review queue,
+  /// instead of waiting for the daily ramp — the success screen has to say
+  /// which of the two happened.
   const factory ImportState.done({
     required int created,
     required int updated,
+    @Default(0) int removed,
+    @Default(false) bool released,
   }) = ImportDone;
 
   const factory ImportState.error(String message) = ImportError;

@@ -129,13 +129,13 @@ return error(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  idle,TResult Function( ImportPreview preview,  ImportOutcome outcome,  double firmRatio,  bool warnBelowThreshold)?  previewing,TResult Function()?  importing,TResult Function( int created,  int updated)?  done,TResult Function( String message)?  error,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  idle,TResult Function( ImportPreview preview,  ImportOutcome outcome,  double firmRatio,  bool warnBelowThreshold)?  previewing,TResult Function()?  importing,TResult Function( int created,  int updated,  int removed,  bool released)?  done,TResult Function( String message)?  error,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case ImportIdle() when idle != null:
 return idle();case ImportPreviewing() when previewing != null:
 return previewing(_that.preview,_that.outcome,_that.firmRatio,_that.warnBelowThreshold);case ImportImporting() when importing != null:
 return importing();case ImportDone() when done != null:
-return done(_that.created,_that.updated);case ImportError() when error != null:
+return done(_that.created,_that.updated,_that.removed,_that.released);case ImportError() when error != null:
 return error(_that.message);case _:
   return orElse();
 
@@ -154,13 +154,13 @@ return error(_that.message);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  idle,required TResult Function( ImportPreview preview,  ImportOutcome outcome,  double firmRatio,  bool warnBelowThreshold)  previewing,required TResult Function()  importing,required TResult Function( int created,  int updated)  done,required TResult Function( String message)  error,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  idle,required TResult Function( ImportPreview preview,  ImportOutcome outcome,  double firmRatio,  bool warnBelowThreshold)  previewing,required TResult Function()  importing,required TResult Function( int created,  int updated,  int removed,  bool released)  done,required TResult Function( String message)  error,}) {final _that = this;
 switch (_that) {
 case ImportIdle():
 return idle();case ImportPreviewing():
 return previewing(_that.preview,_that.outcome,_that.firmRatio,_that.warnBelowThreshold);case ImportImporting():
 return importing();case ImportDone():
-return done(_that.created,_that.updated);case ImportError():
+return done(_that.created,_that.updated,_that.removed,_that.released);case ImportError():
 return error(_that.message);}
 }
 /// A variant of `when` that fallback to returning `null`
@@ -175,13 +175,13 @@ return error(_that.message);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  idle,TResult? Function( ImportPreview preview,  ImportOutcome outcome,  double firmRatio,  bool warnBelowThreshold)?  previewing,TResult? Function()?  importing,TResult? Function( int created,  int updated)?  done,TResult? Function( String message)?  error,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  idle,TResult? Function( ImportPreview preview,  ImportOutcome outcome,  double firmRatio,  bool warnBelowThreshold)?  previewing,TResult? Function()?  importing,TResult? Function( int created,  int updated,  int removed,  bool released)?  done,TResult? Function( String message)?  error,}) {final _that = this;
 switch (_that) {
 case ImportIdle() when idle != null:
 return idle();case ImportPreviewing() when previewing != null:
 return previewing(_that.preview,_that.outcome,_that.firmRatio,_that.warnBelowThreshold);case ImportImporting() when importing != null:
 return importing();case ImportDone() when done != null:
-return done(_that.created,_that.updated);case ImportError() when error != null:
+return done(_that.created,_that.updated,_that.removed,_that.released);case ImportError() when error != null:
 return error(_that.message);case _:
   return null;
 
@@ -330,11 +330,13 @@ String toString() {
 
 
 class ImportDone implements ImportState {
-  const ImportDone({required this.created, required this.updated});
+  const ImportDone({required this.created, required this.updated, this.removed = 0, this.released = false});
   
 
  final  int created;
  final  int updated;
+@JsonKey() final  int removed;
+@JsonKey() final  bool released;
 
 /// Create a copy of ImportState
 /// with the given fields replaced by the non-null parameter values.
@@ -346,16 +348,16 @@ $ImportDoneCopyWith<ImportDone> get copyWith => _$ImportDoneCopyWithImpl<ImportD
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ImportDone&&(identical(other.created, created) || other.created == created)&&(identical(other.updated, updated) || other.updated == updated));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ImportDone&&(identical(other.created, created) || other.created == created)&&(identical(other.updated, updated) || other.updated == updated)&&(identical(other.removed, removed) || other.removed == removed)&&(identical(other.released, released) || other.released == released));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,created,updated);
+int get hashCode => Object.hash(runtimeType,created,updated,removed,released);
 
 @override
 String toString() {
-  return 'ImportState.done(created: $created, updated: $updated)';
+  return 'ImportState.done(created: $created, updated: $updated, removed: $removed, released: $released)';
 }
 
 
@@ -366,7 +368,7 @@ abstract mixin class $ImportDoneCopyWith<$Res> implements $ImportStateCopyWith<$
   factory $ImportDoneCopyWith(ImportDone value, $Res Function(ImportDone) _then) = _$ImportDoneCopyWithImpl;
 @useResult
 $Res call({
- int created, int updated
+ int created, int updated, int removed, bool released
 });
 
 
@@ -383,11 +385,13 @@ class _$ImportDoneCopyWithImpl<$Res>
 
 /// Create a copy of ImportState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') $Res call({Object? created = null,Object? updated = null,}) {
+@pragma('vm:prefer-inline') $Res call({Object? created = null,Object? updated = null,Object? removed = null,Object? released = null,}) {
   return _then(ImportDone(
 created: null == created ? _self.created : created // ignore: cast_nullable_to_non_nullable
 as int,updated: null == updated ? _self.updated : updated // ignore: cast_nullable_to_non_nullable
-as int,
+as int,removed: null == removed ? _self.removed : removed // ignore: cast_nullable_to_non_nullable
+as int,released: null == released ? _self.released : released // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 

@@ -171,6 +171,38 @@ final class ContentIntakePolicy {
         for (final card in pending.take(quota)) card.copyWith(introducedAt: now),
       ];
 
+  /// How many cards are held back right now.
+  ///
+  /// Counts without sorting: `_pending` orders the queue, and the collection
+  /// screen repaints on every change of the collection — paying an O(n log n)
+  /// sort for a number that does not depend on order is waste.
+  int get pendingCount =>
+      _collection.all.where((card) => !card.isReleased).length;
+
+  /// Releases [card] on the spot, outside the daily ramp (decision of
+  /// 12/08/2026: the import screen offers it as an option, the collection
+  /// screen as a button).
+  ///
+  /// It stamps `dueAt` together with `introducedAt` because a released card is
+  /// due at once — leaving `dueAt` on the projected release date would put the
+  /// card in the collection as "released" and still invisible to the session
+  /// until that date, which is the worst of the two behaviours.
+  ///
+  /// Already released cards come back untouched: re-stamping `introducedAt`
+  /// would rewrite the day the card entered the study, and `dueAt` would jump
+  /// back to now, erasing a real schedule.
+  Card releasedNow(Card card, DateTime now) =>
+      card.isReleased ? card : card.copyWith(introducedAt: now, dueAt: now);
+
+  /// Every held-back card, stamped as released as of [now]. The caller only
+  /// saves — same contract as [releaseToday].
+  ///
+  /// It does not touch the release journal: this is not the day's batch, it is
+  /// an explicit request from the user, and consuming the day's quota with it
+  /// would hold back the ramp for a reason the dashboard could not explain.
+  List<Card> releaseAllPending(DateTime now) =>
+      [for (final card in _pending) releasedNow(card, now)];
+
   /// Spreads what is still pending over the days left in the initial load, so
   /// a mid-window import does not pile up on the last day.
   int _initialLoadQuota(int pendingCount, int dayOfUse) {

@@ -114,6 +114,9 @@ void main() {
     expect(again.updated, isEmpty);
   });
 
+  // This test guards a requirement, not a line of code: the app ships with the
+  // release switch on, so the default path below looks unused — it is the one
+  // the acceptance criterion of H5 is checked on. Do not delete it as dead.
   test('a block of 100 does not all get the same first review date — it is '
       'spread over the days of the initial load', () {
     final built = build();
@@ -125,10 +128,128 @@ void main() {
     final outcome = built.service.resolve(parser.parse(source), now);
 
     expect(outcome.created.length, 100);
+    expect(outcome.releasedOnImport, isFalse, reason: 'the ramp is the default');
     expect(
       outcome.created.map((card) => card.dueAt).toSet().length,
       greaterThan(1),
       reason: 'H5 is checked right here, on the import screen',
     );
+  });
+
+  group('releasing on import', () {
+    test('the option travels in the outcome; the cards are still held back',
+        () {
+      final built = build();
+
+      final outcome = built.service.resolve(
+        parser.parse(card(id: 'est-001')),
+        now,
+        releaseNow: true,
+      );
+
+      expect(outcome.releasedOnImport, isTrue);
+      expect(
+        outcome.created.single.introducedAt,
+        isNull,
+        reason: 'the stamp belongs to whoever confirms, not to resolve',
+      );
+    });
+
+    test('a card that already exists is never released by the option', () {
+      final built = build();
+      // Imported earlier and still waiting for the ramp.
+      built.collection.save(
+        built.service.resolve(parser.parse(card(id: 'est-001')), now)
+            .created
+            .single,
+      );
+
+      final again = built.service.resolve(
+        parser.parse(card(id: 'est-001', answer: 'Resposta corrigida.')),
+        now,
+        releaseNow: true,
+      );
+
+      expect(again.created, isEmpty);
+      expect(again.updated.single.introducedAt, isNull);
+    });
+  });
+
+  group('importing as a mirror of the file', () {
+    test('an ordinary import never removes anything', () {
+      final built = build();
+      built.collection.save(
+        built.service.resolve(parser.parse(card(id: 'velho')), now).created.single,
+      );
+
+      final outcome = built.service.resolve(parser.parse(card(id: 'novo')), now);
+
+      expect(outcome.removed, isEmpty);
+    });
+
+    test('what the file no longer mentions is listed for removal', () {
+      final built = build();
+      built.collection.save(
+        built.service.resolve(parser.parse(card(id: 'velho')), now).created.single,
+      );
+
+      final outcome = built.service.resolve(
+        parser.parse(card(id: 'novo', question: 'Outra pergunta?')),
+        now,
+      );
+      final mirrored = built.service.resolve(
+        parser.parse(card(id: 'novo', question: 'Outra pergunta?')),
+        now,
+        mirror: true,
+      );
+
+      expect(outcome.removed, isEmpty);
+      expect(mirrored.removed.single.id, 'velho');
+      expect(mirrored.created.single.id, 'novo');
+    });
+
+    test('a card the file still carries is kept, not removed', () {
+      final built = build();
+      built.collection.save(
+        built.service.resolve(parser.parse(card(id: 'velho')), now).created.single,
+      );
+
+      final outcome =
+          built.service.resolve(parser.parse(card(id: 'velho')), now, mirror: true);
+
+      expect(outcome.removed, isEmpty);
+      expect(outcome.updated.single.id, 'velho');
+    });
+
+    test('a block the parser could not read never removes a card', () {
+      final built = build();
+      built.collection.save(
+        built.service.resolve(parser.parse(card(id: 'velho')), now).created.single,
+      );
+
+      // Same card, now missing the `assunto:` line: it lands in `invalid`, and
+      // treating that as "not in the file" would erase 30 days of history.
+      const broken = '''
+---
+id: velho
+dificuldade: intermediário
+
+**Pergunta**
+Qual a diferença entre setState e um notifier?
+
+**Resposta**
+setState reconstrói o widget inteiro.
+''';
+      final preview = parser.parse(broken);
+      final outcome = built.service.resolve(preview, now, mirror: true);
+
+      expect(preview.invalid, hasLength(1));
+      expect(outcome.removed, isEmpty);
+      expect(
+        outcome.mirrorHeldBack,
+        isTrue,
+        reason: 'a typo must not be read as "the file dropped this card"',
+      );
+    });
   });
 }

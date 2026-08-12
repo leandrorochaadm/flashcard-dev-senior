@@ -4,6 +4,7 @@ import '../../core/di/service_locator.dart';
 import '../../domain/import/import_preview.dart';
 import '../../domain/import/import_service.dart';
 import '../shared/app_scaffold.dart';
+import '../shared/delete_confirmation.dart';
 import 'import_state.dart';
 import 'import_viewmodel.dart';
 import 'widgets/copy_template_button.dart';
@@ -23,6 +24,7 @@ class ImportView extends StatefulWidget {
 class _ImportViewState extends State<ImportView> {
   // The View is one of the two places allowed to resolve get_it.
   late final ImportViewModel _viewModel = ImportViewModel(
+    getIt(),
     getIt(),
     getIt(),
     getIt(),
@@ -53,6 +55,20 @@ class _ImportViewState extends State<ImportView> {
     _viewModel.reset();
   }
 
+  /// An import that only adds goes straight through; one that erases asks
+  /// first, with the count on screen.
+  Future<void> _confirmImport(ImportOutcome outcome) async {
+    if (outcome.removed.isNotEmpty) {
+      final confirmed = await confirmDeletion(
+        context,
+        title: 'Apagar ${outcome.removed.length} cartão(ões)?',
+        message: 'Eles estão na coleção e não aparecem no texto importado.',
+      );
+      if (!confirmed) return;
+    }
+    await _viewModel.confirm();
+  }
+
   @override
   Widget build(BuildContext context) {
     return AppScaffold(
@@ -76,8 +92,19 @@ class _ImportViewState extends State<ImportView> {
               firmRatio: firmRatio,
               warnBelowThreshold: warnBelowThreshold,
             ),
-          ImportDone(:final created, :final updated) =>
-            _done(context, created: created, updated: updated),
+          ImportDone(
+            :final created,
+            :final updated,
+            :final removed,
+            :final released,
+          ) =>
+            _done(
+              context,
+              created: created,
+              updated: updated,
+              removed: removed,
+              released: released,
+            ),
           ImportError(:final message) => _error(context, message),
         },
       ),
@@ -115,11 +142,46 @@ class _ImportViewState extends State<ImportView> {
           ),
         ),
         const SizedBox(height: 12),
+        // The most used decision first, the destructive one last.
+        _releaseNowSwitch(),
+        _mirrorSwitch(),
         FilledButton(
           onPressed: () => _viewModel.parse(_controller.text),
           child: const Text('Conferir antes de importar'),
         ),
       ],
+    );
+  }
+
+  Widget _releaseNowSwitch() {
+    return ValueListenableBuilder<bool>(
+      valueListenable: _viewModel.releaseNow,
+      builder: (context, enabled, _) => SwitchListTile(
+        contentPadding: EdgeInsets.zero,
+        value: enabled,
+        onChanged: (value) => _viewModel.setReleaseNow(enabled: value),
+        title: const Text('Liberar para estudo agora'),
+        subtitle: const Text(
+          'Os cartões novos entram na fila de revisão de hoje. Desligado, eles '
+          'são liberados aos poucos, cerca de 20 por dia.',
+        ),
+      ),
+    );
+  }
+
+  Widget _mirrorSwitch() {
+    return ValueListenableBuilder<bool>(
+      valueListenable: _viewModel.mirror,
+      builder: (context, enabled, _) => SwitchListTile(
+        contentPadding: EdgeInsets.zero,
+        value: enabled,
+        onChanged: (value) => _viewModel.setMirror(enabled: value),
+        title: const Text('O arquivo é a coleção inteira'),
+        subtitle: const Text(
+          'Apaga os cartões que não estiverem no texto, com o histórico deles. '
+          'A prévia lista quais antes de confirmar.',
+        ),
+      ),
     );
   }
 
@@ -138,7 +200,7 @@ class _ImportViewState extends State<ImportView> {
         if (warnBelowThreshold)
           IntakeWarning(
             firmRatio: firmRatio,
-            onImportAnyway: _viewModel.confirm,
+            onImportAnyway: () => _confirmImport(outcome),
             onCancel: _backToEditing,
           )
         else
@@ -151,8 +213,12 @@ class _ImportViewState extends State<ImportView> {
               ),
               const SizedBox(width: 8),
               FilledButton(
-                onPressed: _viewModel.confirm,
-                child: const Text('Importar'),
+                onPressed: () => _confirmImport(outcome),
+                child: Text(
+                  outcome.removed.isEmpty
+                      ? 'Importar'
+                      : 'Importar e apagar ${outcome.removed.length}',
+                ),
               ),
             ],
           ),
@@ -164,6 +230,8 @@ class _ImportViewState extends State<ImportView> {
     BuildContext context, {
     required int created,
     required int updated,
+    required int removed,
+    required bool released,
   }) {
     return Center(
       child: Column(
@@ -172,13 +240,19 @@ class _ImportViewState extends State<ImportView> {
           const Icon(Icons.check_circle_outline, size: 48),
           const SizedBox(height: 12),
           Text(
-            '$created cartão(ões) novo(s) e $updated atualizado(s).',
+            '$created cartão(ões) novo(s) e $updated atualizado(s).'
+            '${removed == 0 ? '' : ' $removed apagado(s).'}',
             style: Theme.of(context).textTheme.titleMedium,
           ),
           const SizedBox(height: 8),
-          const Text(
-            'Os cartões entram na coleção agora e são liberados aos poucos, '
-            'todo dia, para a fila de revisão não estourar.',
+          // Reads the state, not the switch: the notifier can change after the
+          // import, and this screen reports what actually happened.
+          Text(
+            released
+                ? 'Os $created cartão(ões) novo(s) já estão na fila de revisão '
+                    'de hoje.'
+                : 'Os cartões entram na coleção agora e são liberados aos '
+                    'poucos, todo dia, para a fila de revisão não estourar.',
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 16),

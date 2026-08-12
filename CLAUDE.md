@@ -28,7 +28,7 @@ Documentos `.md`, mensagens de commit e a conversa continuam em português.
 ## Estado atual
 
 **As 16 histórias estão implementadas.** `flutter analyze` sai limpo e
-`flutter test` roda 273 testes, com **100% de cobertura de linha em `domain/` e
+`flutter test` roda 329 testes, com **100% de cobertura de linha em `domain/` e
 `data/`** — nenhum deles usa `WidgetTester`. `flutter build web --release`
 compila; use `tool/build_web.sh`, que carimba versão, build e hash do commit
 (lidos do `pubspec.yaml` e do git) na tela `/sobre`.
@@ -307,7 +307,16 @@ O teto limita a **data agendada**, nunca a `stability`. Indicadores leem
   (básico/intermediário/avançado), o segundo é o 1..10 do algoritmo.
 - **`importedAt` × `introducedAt`** — importar não é liberar. `introducedAt ==
   null` significa que o cartão está no banco mas retido pela
-  `ContentIntakePolicy`. Sem essa distinção, H16 e H5 se excluem.
+  `ContentIntakePolicy`. Sem essa distinção, H16 e H5 se excluem. **Desde
+  12/08/2026 a rampa é opcional**: o switch "Liberar para estudo agora" da tela
+  de importação nasce ligado, e a tela de cartões tem o botão para os que já
+  estão retidos. O H16 não foi revogado — vira o caminho do switch desligado. A
+  `ContentIntakePolicy` continua sendo a **única** classe que escreve
+  `introducedAt` (`releasedNow`, `releaseAllPending`); o `ImportService` só
+  carrega a intenção em `ImportOutcome.releasedOnImport`, e o carimbo acontece
+  uma vez no `confirm`, com a hora do salvamento — a da prévia envelheceria se a
+  tela atravessasse a meia-noite. Liberação fora da rampa **não** consome a cota
+  do dia nem grava no `ReleaseJournal`.
 - **`source == session` × `simulado`** — o simulado grava `ReviewLog` e **nada
   mais**: não toca `stability`, `dueAt`, `state` nem `lapses`. `Calibration` e o
   otimizador precisam filtrar `source == session`, senão o único indicador que
@@ -328,6 +337,19 @@ O teto limita a **data agendada**, nunca a `stability`. Indicadores leem
   ontem quebra o app de amanhã — e o backup é a única proteção real contra o
   despejo do IndexedDB pelo navegador. Cada migração é função pura sobre `Map`,
   testável sem banco.
+- **Apagar cartão apaga as revisões dele** (decisão de 12/08/2026, fora dos 16
+  essenciais). `CardDeletionService` remove cartão primeiro e histórico depois:
+  na ordem inversa, uma falha no meio deixaria cartão sem histórico e o
+  agendamento seria recalculado do zero. Quem decide o alcance de cada pedido é
+  `CardDeletionSelection` — "apagar o assunto X" é filtro de cartões, portanto
+  domínio. E a importação-espelho **não remove nada quando o texto tem bloco
+  ilegível** (`ImportOutcome.mirrorHeldBack`): typo e remoção intencional são
+  indistinguíveis, e o erro custa 30 dias de histórico.
+- **O cartão na tela da sessão é um retrato, não o cartão do banco.** Dá para
+  apagá-lo pela tela de cartões ou pela importação-espelho enquanto a sessão
+  segue viva na pilha de navegação; salvar o retrato ressuscitaria o cartão
+  apagado e gravaria um `ReviewLog` para ele. `SessionViewModel.answer` confere
+  `_cards.byId` antes de salvar. Tem teste dedicado.
 - **A tela `/debug` (viagem no tempo) opera em banco separado,
   `flashcards_debug`** — nunca no real, senão a ferramenta de teste corrompe o
   histórico que o app existe para proteger. Ela troca `SystemClock` por
