@@ -143,7 +143,7 @@ deprecado e se autodestrói, então o `web/sw.js` do projeto assume o cache.
 ### Testes
 
 ```sh
-flutter test                                        # 271 testes na VM Dart
+flutter test                                        # 273 testes na VM Dart
 flutter test --coverage                             # domain/ e data/ em 100% de linha
 flutter test --platform chrome --tags=chrome-only   # o que precisa de js_interop / IndexedDB
 flutter analyze

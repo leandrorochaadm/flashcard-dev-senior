@@ -108,6 +108,7 @@ class SessionViewModel {
       card,
       _scheduler.previewIntervals(card, now),
       current.currentRound,
+      current.subjects.length,
       current.currentSubject,
       _remainingInRound(now, current.currentSubject),
     );
@@ -216,6 +217,7 @@ class SessionViewModel {
     state.value = SessionState.showingQuestion(
       next,
       current.currentRound,
+      current.subjects.length,
       current.currentSubject,
       _remainingInRound(now, current.currentSubject),
     );

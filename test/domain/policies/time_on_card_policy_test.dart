@@ -35,12 +35,47 @@ void main() {
     final now = DateTime(2026, 8, 11, 9);
     const subjects = ['Estado', 'Widgets', 'Testes', 'Async', 'Plataforma'];
 
-    test('a session is five rounds of five minutes', () {
+    test('a session is one five-minute round per chosen subject', () {
       final session = policy.start('s1', now, subjects);
 
-      expect(session.subjects.length, SessionPolicy.roundsPerSession);
+      expect(session.subjects.length, subjects.length);
       expect(session.remainingInRound, SessionPolicy.roundDuration);
-      expect(policy.sessionDuration, const Duration(minutes: 25));
+      expect(policy.sessionDuration(session), const Duration(minutes: 25));
+    });
+
+    test('the session shrinks and grows with the number of subjects', () {
+      final short = policy.start('s2', now, const ['Estado']);
+      final long = policy.start('s3', now, const [
+        'Estado',
+        'Widgets',
+        'Testes',
+        'Async',
+        'Plataforma',
+        'Build',
+        'Deploy',
+      ]);
+
+      expect(short.scores, hasLength(1));
+      expect(policy.sessionDuration(short), const Duration(minutes: 5));
+      expect(policy.isLastRound(short), isTrue);
+      expect(policy.advanceRound(short).finished, isTrue);
+
+      expect(long.scores, hasLength(7));
+      expect(policy.sessionDuration(long), const Duration(minutes: 35));
+      expect(policy.isLastRound(long), isFalse);
+    });
+
+    test('the only floor on the chosen subjects is one', () {
+      expect(policy.canStart(const []), isFalse);
+      expect(policy.canStart(const ['Estado']), isTrue);
+      expect(policy.canStart(subjects), isTrue);
+      expect(policy.canStart([...subjects, 'Build', 'Deploy']), isTrue);
+    });
+
+    test('the picker can show the length before the session exists', () {
+      expect(policy.durationFor(const []), Duration.zero);
+      expect(policy.durationFor(const ['Estado']), const Duration(minutes: 5));
+      expect(policy.durationFor(subjects), const Duration(minutes: 25));
     });
 
     test('pausing simply stops ticking, so nothing drifts with the wall clock',

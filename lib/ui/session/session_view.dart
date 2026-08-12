@@ -1,5 +1,3 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 
 import '../../core/di/service_locator.dart';
@@ -67,11 +65,13 @@ class _SessionViewState extends State<SessionView> {
           SessionShowingQuestion(
             :final card,
             :final roundIndex,
+            :final roundCount,
             :final remaining
           ) =>
             _StudyBody(
               viewModel: _viewModel,
               roundIndex: roundIndex,
+              roundCount: roundCount,
               remaining: remaining,
               face: CardFace(card: card, revealed: false),
               footer: SizedBox(
@@ -92,11 +92,13 @@ class _SessionViewState extends State<SessionView> {
             :final card,
             :final previews,
             :final roundIndex,
+            :final roundCount,
             :final remaining
           ) =>
             _StudyBody(
               viewModel: _viewModel,
               roundIndex: roundIndex,
+              roundCount: roundCount,
               remaining: remaining,
               face: CardFace(card: card, revealed: true),
               footer: RatingButtons(
@@ -130,6 +132,7 @@ class _StudyBody extends StatelessWidget {
   const _StudyBody({
     required this.viewModel,
     required this.roundIndex,
+    required this.roundCount,
     required this.remaining,
     required this.face,
     required this.footer,
@@ -137,6 +140,7 @@ class _StudyBody extends StatelessWidget {
 
   final SessionViewModel viewModel;
   final int roundIndex;
+  final int roundCount;
   final int remaining;
   final Widget face;
   final Widget footer;
@@ -158,7 +162,7 @@ class _StudyBody extends StatelessWidget {
                 builder: (context, elapsed, _) => RoundTimer(
                   roundRemaining: roundLeft,
                   roundIndex: roundIndex,
-                  roundCount: SessionPolicy.roundsPerSession,
+                  roundCount: roundCount,
                   remaining: remaining,
                   paused: paused,
                   stopwatchVisible: stopwatchVisible,
@@ -192,8 +196,8 @@ class _SubjectPicker extends StatefulWidget {
 class _SubjectPickerState extends State<_SubjectPicker> {
   final _selected = <String>[];
 
-  int get _wanted =>
-      math.min(SessionPolicy.roundsPerSession, widget.subjects.length);
+  // The picker is a View, so it may resolve `get_it` — the ViewModel may not.
+  final _policy = getIt<SessionPolicy>();
 
   @override
   Widget build(BuildContext context) {
@@ -206,7 +210,7 @@ class _SubjectPickerState extends State<_SubjectPicker> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Escolha $_wanted assuntos — um por round de 5 minutos.',
+          'Escolha os assuntos — cada um é um round de 5 minutos.',
           style: Theme.of(context).textTheme.titleMedium,
         ),
         const SizedBox(height: 12),
@@ -223,9 +227,7 @@ class _SubjectPickerState extends State<_SubjectPicker> {
                   value: _selected.contains(queue.subject),
                   onChanged: (checked) => setState(() {
                     if (checked ?? false) {
-                      if (_selected.length < _wanted) {
-                        _selected.add(queue.subject);
-                      }
+                      _selected.add(queue.subject);
                     } else {
                       _selected.remove(queue.subject);
                     }
@@ -237,10 +239,16 @@ class _SubjectPickerState extends State<_SubjectPicker> {
         const SizedBox(height: 12),
         Center(
           child: FilledButton(
-            onPressed: _selected.length == _wanted
+            onPressed: _policy.canStart(_selected)
                 ? () => widget.onStart(List.of(_selected))
                 : null,
-            child: Text('Começar (${_selected.length}/$_wanted)'),
+            child: Text(
+              _policy.canStart(_selected)
+                  ? 'Começar · ${_selected.length} '
+                        '${_selected.length == 1 ? 'assunto' : 'assuntos'} · '
+                        '${_policy.durationFor(_selected).inMinutes} min'
+                  : 'Começar',
+            ),
           ),
         ),
       ],

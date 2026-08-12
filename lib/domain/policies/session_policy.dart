@@ -1,17 +1,28 @@
 import '../models/enums.dart';
 import '../models/study_session.dart';
 
-/// A 25-minute session: 5 rounds of 5 minutes, one subject each.
+/// A session of 5-minute rounds, one subject each. The subjects are chosen by
+/// hand and there is no fixed number of them: the session lasts as long as the
+/// chosen list, so five subjects still make the 25 minutes of requirement 8.
 ///
 /// The 1-second `Timer` is ViewModel infrastructure, but the durations, the
-/// number of rounds and "pausing freezes everything" are requirement 8.
+/// length of the session and "pausing freezes everything" are requirement 8.
 final class SessionPolicy {
   const SessionPolicy();
 
   static const roundDuration = Duration(minutes: 5);
-  static const roundsPerSession = 5;
 
-  Duration get sessionDuration => roundDuration * roundsPerSession;
+  /// How long a session over [subjects] runs: one round per chosen subject.
+  /// The picker shows this before starting, so it takes the plain list.
+  Duration durationFor(List<String> subjects) =>
+      roundDuration * subjects.length;
+
+  Duration sessionDuration(StudySession session) =>
+      durationFor(session.subjects);
+
+  /// There is no ceiling on how many subjects a session covers — the only
+  /// floor is that a session with no subject has no round to run.
+  bool canStart(List<String> subjects) => subjects.isNotEmpty;
 
   StudySession start(String id, DateTime now, List<String> subjects) =>
       StudySession(

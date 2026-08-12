@@ -87,7 +87,9 @@ void main() {
       await tester.tap(find.text('Estado'));
       await tester.pump();
 
-      await tester.tap(find.widgetWithText(FilledButton, 'Começar (1/1)'));
+      await tester.tap(
+        find.widgetWithText(FilledButton, 'Começar · 1 assunto · 5 min'),
+      );
       await tester.pumpAndSettle();
 
       // First card's question, answer hidden.
@@ -109,6 +111,49 @@ void main() {
     },
   );
 
+  // The picker used to force exactly five subjects. It now accepts any number
+  // from one up, so the two ends are what a regression would break: zero keeps
+  // the button dead, and six — past the old ceiling — starts a six-round
+  // session.
+  testWidgets('any number of subjects can be picked, above five included',
+      (tester) async {
+    useScreenSize(tester);
+
+    const extras = ['Widgets', 'Testes', 'Async', 'Plataforma', 'Build'];
+    await getIt<CardRepository>().saveAll([
+      for (final subject in extras)
+        newCard(
+          'due-$subject',
+          subject: subject,
+          importedAt: importedAt,
+          introducedAt: importedAt,
+          dueAt: now.subtract(const Duration(hours: 1)),
+        ),
+    ]);
+
+    await tester.pumpWidget(const MaterialApp(home: SessionView()));
+    await tester.pumpAndSettle();
+
+    // Nothing picked: no round to run, so the button stays dead.
+    final startButton = find.widgetWithText(FilledButton, 'Começar');
+    expect(tester.widget<FilledButton>(startButton).onPressed, isNull);
+
+    for (final subject in ['Estado', ...extras]) {
+      await tester.tap(find.text(subject));
+      await tester.pump();
+    }
+
+    // Six subjects — one past the old fixed five — and the session length
+    // follows the list instead of a constant.
+    await tester.tap(
+      find.widgetWithText(FilledButton, 'Começar · 6 assuntos · 30 min'),
+    );
+    await tester.pumpAndSettle();
+
+    // The clock counts the rounds this session actually has, not five.
+    expect(find.text('Round 1/6'), findsOneWidget);
+  });
+
   // The four labels are the client's own words and cannot be shortened, so the
   // narrowest phone is where they either fit or overflow. A `RenderFlex`
   // overflow fails the test on its own — `tester.takeException` is here to say
@@ -121,7 +166,9 @@ void main() {
 
     await tester.tap(find.text('Estado'));
     await tester.pump();
-    await tester.tap(find.widgetWithText(FilledButton, 'Começar (1/1)'));
+    await tester.tap(
+      find.widgetWithText(FilledButton, 'Começar · 1 assunto · 5 min'),
+    );
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('Mostrar resposta'));

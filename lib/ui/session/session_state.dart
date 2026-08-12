@@ -16,9 +16,10 @@ part 'session_state.freezed.dart';
 sealed class SessionState with _$SessionState {
   const factory SessionState.loading() = SessionLoading;
 
-  /// No session running: the five subjects of the next 25 minutes are picked
-  /// first. Only subjects that have something to serve today are offered —
-  /// the domain decides which, in `DueCardsPolicy.studiableSubjects`.
+  /// No session running: the subjects are picked first — as many as the user
+  /// wants, one round of five minutes each. Only subjects that have something
+  /// to serve today are offered — the domain decides which, in
+  /// `DueCardsPolicy.studiableSubjects`.
   const factory SessionState.chooseSubjects(
     List<SubjectQueue> availableSubjects,
   ) = SessionChooseSubjects;
@@ -28,9 +29,13 @@ sealed class SessionState with _$SessionState {
   ///
   /// [remaining] counts this card too: it is "how many are left", the way a
   /// reviewer's counter reads.
+  ///
+  /// [roundCount] travels with [roundIndex] because the session is as long as
+  /// the chosen list of subjects: the clock cannot assume a fixed total.
   const factory SessionState.showingQuestion(
     Card card,
     int roundIndex,
+    int roundCount,
     String subject,
     int remaining,
   ) = SessionShowingQuestion;
@@ -40,6 +45,7 @@ sealed class SessionState with _$SessionState {
     Card card,
     Map<Rating, Duration> previews,
     int roundIndex,
+    int roundCount,
     String subject,
     int remaining,
   ) = SessionShowingAnswer;

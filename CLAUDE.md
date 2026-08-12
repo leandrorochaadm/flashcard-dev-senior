@@ -28,7 +28,7 @@ Documentos `.md`, mensagens de commit e a conversa continuam em português.
 ## Estado atual
 
 **As 16 histórias estão implementadas.** `flutter analyze` sai limpo e
-`flutter test` roda 271 testes, com **100% de cobertura de linha em `domain/` e
+`flutter test` roda 273 testes, com **100% de cobertura de linha em `domain/` e
 `data/`** — nenhum deles usa `WidgetTester`. `flutter build web --release`
 compila; use `tool/build_web.sh`, que carimba versão, build e hash do commit
 (lidos do `pubspec.yaml` e do git) na tela `/sobre`.
