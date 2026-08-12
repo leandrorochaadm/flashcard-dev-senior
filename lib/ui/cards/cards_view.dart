@@ -5,7 +5,7 @@ import '../../core/di/service_locator.dart';
 import '../../domain/models/card.dart';
 import '../import/widgets/preview_list.dart' show difficultyLabel;
 import '../shared/app_scaffold.dart';
-import '../shared/rich_text_body.dart';
+import '../shared/card_markdown.dart';
 import 'cards_state.dart';
 import 'cards_viewmodel.dart';
 import 'widgets/problem_card_banner.dart';
@@ -166,7 +166,7 @@ class _CardTile extends StatelessWidget {
                 'perguntas menores: uma ideia por cartão.',
               ),
             ),
-          RichTextBody(text: card.answer),
+          CardMarkdown(text: card.answer),
         ],
       ),
     );

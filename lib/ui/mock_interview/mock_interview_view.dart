@@ -5,7 +5,7 @@ import '../../core/di/service_locator.dart';
 import '../../domain/mock_interview/mock_interview_service.dart';
 import '../../domain/models/enums.dart';
 import '../shared/app_scaffold.dart';
-import '../shared/rich_text_body.dart';
+import '../shared/card_markdown.dart';
 import 'mock_interview_state.dart';
 import 'mock_interview_viewmodel.dart';
 
@@ -173,7 +173,7 @@ class _Question extends StatelessWidget {
         const SizedBox(height: 16),
         Expanded(
           child: SingleChildScrollView(
-            child: RichTextBody(text: question.card.question),
+            child: CardMarkdown(text: question.card.question),
           ),
         ),
         const SizedBox(height: 16),
@@ -229,7 +229,7 @@ class _Answer extends StatelessWidget {
         const SizedBox(height: 16),
         Expanded(
           child: SingleChildScrollView(
-            child: RichTextBody(text: answer.card.answer),
+            child: CardMarkdown(text: answer.card.answer),
           ),
         ),
         const SizedBox(height: 16),

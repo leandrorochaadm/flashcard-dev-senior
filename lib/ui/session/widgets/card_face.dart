@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../domain/models/card.dart' as domain;
-import '../../shared/rich_text_body.dart';
+import '../../shared/card_markdown.dart';
 
 /// The question, and the answer only once it has been revealed.
 ///
@@ -50,10 +50,11 @@ class CardFace extends StatelessWidget {
               const SizedBox(height: 24),
               const Divider(thickness: 1),
               const SizedBox(height: 24),
-              DefaultTextStyle.merge(
-                textAlign: TextAlign.center,
-                child: RichTextBody(text: card.answer),
-              ),
+              // Left-aligned, unlike the question above it: the answer is
+              // Markdown, and a centered bullet list or heading reads as a
+              // ragged column. `SelectableText` inherits the alignment from
+              // `DefaultTextStyle`, so centering here would reach every block.
+              CardMarkdown(text: card.answer),
             ],
           ],
         ),

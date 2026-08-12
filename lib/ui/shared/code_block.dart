@@ -8,10 +8,21 @@ import 'package:flutter/material.dart';
 /// The highlighter is hand-rolled for Dart only. A full highlight package
 /// would register dozens of languages and weigh on the first offline load,
 /// which risk 7 of the handoff calls out.
+///
+/// [language] is the word written after the opening fence. Only `dart` — and
+/// a bare fence, which the answers use for Dart anyway — gets colored; any
+/// other language renders monospaced but plain, because coloring Dart tokens
+/// inside a SQL or YAML snippet would be worse than no color at all.
 class CodeBlock extends StatelessWidget {
-  const CodeBlock({required this.code, super.key});
+  const CodeBlock({required this.code, this.language = '', super.key});
 
   final String code;
+  final String language;
+
+  bool get _highlights {
+    final normalized = language.trim().toLowerCase();
+    return normalized.isEmpty || normalized == 'dart';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -40,7 +51,9 @@ class CodeBlock extends StatelessWidget {
                 height: 1.45,
                 color: palette.plain,
               ),
-              children: _highlight(code, palette),
+              children: _highlights
+                  ? _highlight(code, palette)
+                  : [TextSpan(text: code)],
             ),
           ),
         ),
@@ -81,6 +94,37 @@ final class _Palette {
   Color get number => dark ? const Color(0xFFE0A15C) : const Color(0xFFB35A00);
 }
 
+/// Reads the string literal that starts at [start], returning it with its
+/// quotes.
+///
+/// The backslash escape is what makes this more than an `indexOf`: in
+/// `'it\'s'` the middle quote does not close the literal, and reading it as a
+/// close would paint the rest of the snippet as if it were inside a string.
+/// A raw string (`r'...'`) has no escapes, so the backslash is literal there.
+/// An unterminated literal stops at the end of the line, so one typo in an
+/// answer cannot swallow the whole block.
+String _readString(String code, int start) {
+  final quote = code[start];
+  final raw = start > 0 && code[start - 1] == 'r';
+  final triple = code.startsWith(quote * 3, start);
+  final closing = triple ? quote * 3 : quote;
+
+  var index = start + closing.length;
+  while (index < code.length) {
+    final char = code[index];
+    if (!raw && char == r'\') {
+      index += 2;
+      continue;
+    }
+    if (!triple && char == '\n') break;
+    if (code.startsWith(closing, index)) {
+      return code.substring(start, index + closing.length);
+    }
+    index++;
+  }
+  return code.substring(start, index.clamp(start, code.length));
+}
+
 /// Tokenizes just enough Dart to color keywords, types, strings, comments and
 /// numbers. Every character of the source is emitted, so indentation and line
 /// breaks survive byte for byte.
@@ -113,10 +157,7 @@ List<TextSpan> _highlight(String code, _Palette palette) {
 
     final char = code[index];
     if (char == "'" || char == '"') {
-      final closing = code.indexOf(char, index + 1);
-      final literal = closing == -1
-          ? rest
-          : code.substring(index, closing + 1);
+      final literal = _readString(code, index);
       emit(literal, palette.string);
       index += literal.length;
       continue;
